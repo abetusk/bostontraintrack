@@ -559,14 +559,16 @@ function initMap() {
   g_map.events.register( "move", g_map, mapEvent );
   g_map.events.register( "moveend", g_map, mapEvent );
 
-  var transportattrib = '<b>Thunderforest Transport Map</b><br />A global public transport map<br /><br />'
-                      + '<a href="http://www.thunderforest.com">Developer Information</a><img class="tf-logo" src="/images/tf-logo-36-inv.png"/>';
+  var transportattrib = 'Maps © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap contributors</a> <br/> Data © <a href="http://www.thunderforest.com">Thunderforest</a> ';
+
 
   var transport = new OpenLayers.Layer.OSM("Transport",
                                            ["http://a.tile.thunderforest.com/transport/${z}/${x}/${y}.png",
                                             "http://b.tile.thunderforest.com/transport/${z}/${x}/${y}.png",
                                             "http://c.tile.thunderforest.com/transport/${z}/${x}/${y}.png"],
-                                           { displayOutsideMaxExtent: true, transitionEffect: 'resize'});
+                                           { displayOutsideMaxExtent: true, 
+                                             transitionEffect: 'resize',
+                                             attribution : transportattrib });
 
   g_map.addLayer(transport);
 

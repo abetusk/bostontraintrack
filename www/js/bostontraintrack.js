@@ -19,6 +19,8 @@
 
 */
 
+// VERSION 0.0.2
+
 var g_stop_layer ;
 
 var g_verbose=1;
@@ -286,18 +288,31 @@ function updateMarker(data, color) {
   var dirty = 0;
   var trips = data[color].TripList.Trips;
 
-  for (x in trips) {
+  // Mark all entries for deletion
+  // 
+  for (var tripid in g_marker) {
+    if (("Color" in g_marker[tripid]) && (g_marker[tripid].Color== color)) {
+      g_marker[tripid].Dirty = 0;
+    }
+  }
+
+  // Create new entries if they don't exist
+  //
+  for (var x in trips) {
     if ("Position" in trips[x]) {
       var tripid = trips[x].TripID;
       if ( !( tripid in g_marker )) {
         //console.log("allocating");
         g_marker[ tripid ] = { Lat : 0, Long : 0, Color : color };
       }
-      g_marker[ tripid ].Dirty = 0;
+      //g_marker[ tripid ].Dirty = 0;
     }
   }
 
-  for (x in trips) {
+  // Draw new entries and unmark them for deletion if we're drawing
+  // them.
+  //
+  for (var x in trips) {
     if ("Position" in trips[x]) {
 
       var tripid = trips[x].TripID;
@@ -325,7 +340,20 @@ function updateMarker(data, color) {
     } else { }
   }
 
-  for (x in trips) {
+  // Delete stale entries
+  //
+  for (var tripid in g_marker) {
+    if (("Color" in g_marker[tripid]) && (g_marker[tripid].Color== color)) {
+      if (g_marker[ tripid ].Dirty == 0) {
+        console.log("REMOVING", tripid)
+        g_marker_layer.removeMarker( g_marker[tripid]["osm_marker"] );
+        delete g_marker[ tripid ];
+      }
+    }
+  }
+
+  /*
+  for (var x in trips) {
     if ("Position" in trips[x]) {
       if (g_marker[ tripid ].Dirty == 0) {
         console.log("REMOVING")
@@ -335,6 +363,7 @@ function updateMarker(data, color) {
       }
     }
   }
+  */
 
   g_marker_layer.redraw();
 }

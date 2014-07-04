@@ -188,13 +188,13 @@ var g_stops =  {
   "place-sdmnl" : { "id" : "place-sdmnl", "name" : "Suffolk Downs Station", "lat" : "42.39050067", "lon" : "-70.99712259", "code" : "b" } ,
   "place-wimnl" : { "id" : "place-wimnl", "name" : "Wood Island Station", "lat" : "42.3796403", "lon" : "-71.02286539", "code" : "b" } ,
   "place-wondl" : { "id" : "place-wondl", "name" : "Wonderland Station", "lat" : "42.41342", "lon" : "-70.991648", "code" : "b" } ,
-  "place-wtcst" : { "id" : "place-wtcst", "name" : "World Trade Center Station", "lat" : "42.34863", "lon" : "-71.04246", "code" : "b" } 
+  "place-wtcst" : { "id" : "place-wtcst", "name" : "World Trade Center Station", "lat" : "42.34863", "lon" : "-71.04246", "code" : "b" }
 };
 
 /*
-        "place-davis" : 
+        "place-davis" :
           { stop_id : "place-davis", name : "Davis Station", latitude : 42.39674, longitude: -71.121815 },
-        "place-portr" : 
+        "place-portr" :
           { stop_id : "place-portr", name : "Porter Square Station", latitude : 42.3884, longitude: -71.119149 }
       };
 */
@@ -272,8 +272,8 @@ function drawMarker(tripid, color) {
     icon = new OpenLayers.Icon("img/underground_" + color + ".png", size, offset);
   }
   dat["osm_marker"] = new OpenLayers.Marker( lonlat, icon );
-  dat["osm_marker"].events.register('mousedown', 
-                                    dat["osm_marker"], 
+  dat["osm_marker"].events.register('mousedown',
+                                    dat["osm_marker"],
                                     (function(xx) { return function() { handlePopup(xx); }; })(tripid) );
   dat["icon"] = icon;
   dat["size"] = size;
@@ -440,8 +440,8 @@ function mapEvent(ev) {
 
       console.log("count:", count);
 
-    } 
-    else 
+    }
+    else
     {
 
       for (var bus_id in g_marker) {
@@ -475,7 +475,7 @@ function mapEvent(ev) {
 
     }
 
-  } 
+  }
   else if (ev.type == "move" ) {
     //console.log("move!");
   }

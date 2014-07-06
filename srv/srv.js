@@ -122,7 +122,7 @@ setInterval( function() {
 	
         try {
           global_connect[ cli_id ].emit("update", dat );
-        catch (ee) {
+        } catch (ee) {
           console.log("when trying to emit to cli_id: ", cli_id, " got error:", ee );
         }
 

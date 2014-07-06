@@ -10,7 +10,7 @@ LICENSE
 
 All source code is under GPL compatible licenses.
 See the headers of the source for the details of what each is under.
-The main `bostontraintrack.js` is under AGPL 3.0.
+The main `bostontraintrack.js` client JavaScript and `srv.js` server JavaScript are under AGPL 3.0.
 
 All artwork is under CC-BY-SA 3.0.
 

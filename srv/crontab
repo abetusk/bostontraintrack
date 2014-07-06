@@ -1,0 +1,3 @@
+# meow crontab
+#
+*       *       *       *       *       /home/meow/bostontraintrack/srv/monitor_srv.pl 2>> /home/meow/bostontraintrack/srv/log/monitor_srv.err >> /home/meow/bostontraintrack/srv/log/monitor_srv.log

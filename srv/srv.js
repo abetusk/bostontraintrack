@@ -109,18 +109,31 @@ sockio.listen(8181);
 
 setInterval( function() { 
   console.log(global_data.n);  
+
+  var conn_count = 0;
   for (var cli_id in global_connect) {
+    conn_count++;
     var colors = [ "red", "orange", "blue" ];
 
     for (var i in colors) {
       if (colors[i] in global_data) {
         var dat = {}
         dat[ colors[i] ] = global_data[ colors[i] ];
-        global_connect[ cli_id ].emit("update", dat );
+	
+	try {
+          global_connect[ cli_id ].emit("update", dat );
+	} catch (ee) {
+          console.log("when trying to emit to cli_id: ", cli_id, " got error:", ee );
+	}
+
       }
     }
 
   }
+
+  var dt = Date.now();
+  var dts = dt.toString();
+  console.log( dts +  " connected clients:", conn_count);
 }, 1000 );
 
 

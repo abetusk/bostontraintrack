@@ -1,7 +1,8 @@
 #!/bin/bash
 
+bd='/home/meow/bostontraintrack/srv'
 
-/usr/bin/node srv.js >> log/srv.log 2>> log/srv.err &
-echo $! >> log/srv.pid
+/usr/bin/node $bd/srv.js >> $bd/log/srv.log 2>> $bd/log/srv.err &
+echo $! >> $bd/log/srv.pid
 
 

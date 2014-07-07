@@ -482,7 +482,7 @@ function updateMarker(data, color) {
   var trips = data[color].TripList.Trips;
 
   // Mark all entries for deletion
-  // 
+  //
   for (var tripid in g_marker) {
     if (("Color" in g_marker[tripid]) && (g_marker[tripid].Color== color)) {
       g_marker[tripid].Dirty = 0;
@@ -724,18 +724,11 @@ function initMap() {
                                            ["http://a.tile.thunderforest.com/transport/${z}/${x}/${y}.png",
                                             "http://b.tile.thunderforest.com/transport/${z}/${x}/${y}.png",
                                             "http://c.tile.thunderforest.com/transport/${z}/${x}/${y}.png"],
-                                           { displayOutsideMaxExtent: true, 
+                                           { displayOutsideMaxExtent: true,
                                              transitionEffect: 'resize',
                                              attribution : transportattrib });
 
   g_map.addLayer(transport);
-
-  //var lonLat = new OpenLayers.LonLat( -71.0636, 42.3581  )
-  var lonLat = new OpenLayers.LonLat( -71.1136, 42.3981  )
-        .transform(
-          new OpenLayers.Projection("EPSG:4326"),
-          g_map.getProjectionObject()
-        );
 
   //var zoom=14;
 
@@ -803,7 +796,36 @@ function initMap() {
   g_map.addLayer(g_stop_layer);
   g_map.setLayerIndex( g_stop_layer, 0 )
 
-  g_map.setCenter (lonLat, g_zoom);
+  var geolocate = new OpenLayers.Control.Geolocate({
+    bind: false,
+    geolocationOptions: {
+        enableHighAccuracy: false,
+        maximumAge: 0,
+        timeout: 7000
+    }
+  });
+
+  g_map.addControl(geolocate);
+
+  geolocate.events.register("locationupdated",geolocate,function(e) {
+    lonLat = new OpenLayers.LonLat(e.position.coords.longitude, e.position.coords.latitude).transform(
+        new OpenLayers.Projection("EPSG:4326"),
+        g_map.getProjectionObject()
+      );
+    g_map.setCenter(lonLat, g_zoom);
+  });
+
+  geolocate.activate();
+
+  var lat = 42.3583183;
+  var lon = -71.0584536;
+  var lonLat;
+
+  lonLat = new OpenLayers.LonLat(lon, lat).transform(
+        new OpenLayers.Projection("EPSG:4326"),
+        g_map.getProjectionObject()
+      );
+  g_map.setCenter(lonLat, g_zoom);
 
 }
 

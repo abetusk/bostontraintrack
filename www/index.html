@@ -9,14 +9,38 @@
     <title>Boston Train Track</title>
     <meta name="description" content="">
    <link rel="stylesheet" type="text/css" href="css/style.css">
+
+   <script src="js/jquery.js"></script>
+   <script src="js/OpenLayers.js"></script>
+   <script src="js/socket.io.js"></script>
+   <script src="js/bostontraintrack.js"></script>
+
+   <style>
+     .busToggle
+     {
+       opacity: 0.55;
+       position: absolute;
+       z-index: 99999;
+     }
+
+   </style>
+
   </head>
   <body>
     <div id="mapdiv"></div>
     <!-- <script src="http://www.openlayers.org/api/OpenLayers.js"></script> -->
-    <script src="js/jquery.js"></script>
-    <script src="js/OpenLayers.js"></script>
-    <script src="js/socket.io.js"></script>
-    <script src="js/bostontraintrack.js"></script>
+
+    <div id="busToggle" class="busToggle">
+      <input
+        id='busToggleInput'
+        type='image'
+        src='img/bus_gw_sq.png'
+        style=' height:47px; width:38px; '
+        value='nothing'
+        onclick='toggleBus();' />
+    </div>
+    <!-- style=' height:38px; width:32px; ' -->
+
   </body>
 
 <!-- Piwik -->

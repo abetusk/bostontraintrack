@@ -30,11 +30,19 @@ var g_marker = {};
 var g_marker_popup = {};
 var g_marker_layer ;
 
+var g_bus_marker = {};
+var g_bus_marker_layer ;
+
+var g_toggle_input = 0;
+
+var g_selection_layer;
+
 var g_dirty = 0;
 
 var g_zoom = 14;
 
 var g_socket;
+var g_bus_socket;
 
 var g_param = {
   bus_w : 36,
@@ -191,6 +199,45 @@ var g_stops =  {
   "place-wtcst" : { "id" : "place-wtcst", "name" : "World Trade Center Station", "lat" : "42.34863", "lon" : "-71.04246", "code" : "b" }
 };
 
+var g_bus_route_hash = {
+  "1" : 1, "7" : 1, "8" : 1, "9" : 1,
+  "10" : 1, "11" : 1, "15" : 1, "16" : 1, "17" : 1,
+  "21" : 1, "22" : 1, "23" : 1, "26" : 1, "28" : 1, "29" : 1,
+  "30" : 1, "31" : 1, "32" : 1, "33" : 1, "34" : 1, "34E" : 1, "35" : 1, "36" : 1, "37" : 1, "38" : 1, "39" : 1,
+  "40" : 1, "41" : 1, "42" : 1, "43" : 1, "44" : 1, "45" : 1, "47" : 1,
+  "51" : 1, "55" : 1, "57" : 1, "59" : 1,
+  "60" : 1, "64" : 1, "66" : 1, "69" : 1,
+  "70" : 1, "70A" : 1, "71" : 1, "73" : 1, "77" : 1, "78" : 1,
+  "80" : 1, "83" : 1, "86" : 1, "87" : 1, "88" : 1, "89" : 1,
+  "90" : 1, "91" : 1, "92" : 1, "93" : 1, "94" : 1, "95" : 1, "96" : 1, "97" : 1, "99" : 1,
+  "100" : 1, "101" : 1, "104" : 1, "105" : 1, "106" : 1, "108" : 1, "109" : 1,
+  "110" : 1, "111" : 1, "112" : 1, "116" : 1, "117" : 1, "119" : 1,
+  "120" : 1,
+  "132" : 1, "134" : 1, "136" : 1, "137" : 1,
+  "171" : 1,
+  "201" : 1, "202" : 1,
+  "210" : 1, "211" : 1, "215" : 1, "216" : 1,
+  "220" : 1, "222" : 1, "225" : 1,
+  "230" : 1, "236" : 1, "238" : 1,
+  "240" : 1,
+  "274" : 1, "275" : 1, "276" : 1, "277" : 1,
+  "350" : 1,
+  "426" : 1, "429" : 1,
+  "430" : 1, "431" : 1,
+  "435" : 1,
+  "441" : 1, "442" : 1,
+  "450" : 1, "455" : 1,
+  "504" : 1,
+  "608" : 1,
+  "627" : 1,
+  "725" : 1,
+  "741" : 1, "742" : 1, "746" : 1, "749" : 1,
+  "751" : 1,
+  "2427" : 1,
+  "4050" : 1,
+  "8993" : 1,
+  "214216" : 1 };
+
 /*
         "place-davis" :
           { stop_id : "place-davis", name : "Davis Station", latitude : 42.39674, longitude: -71.121815 },
@@ -221,6 +268,72 @@ function printdata(data, color) {
 function handlePopup(tripid) {
   console.log("handlePopup>>", tripid);
 }
+
+function drawBusMarker(busid, busType) {
+  headingLookup = [ "0", "45", "90", "135", "180", "225", "270", "315" ];
+
+  var dat = g_bus_marker[busid];
+
+  // Remove it
+  //
+  if ( "osm_marker" in dat ) {
+    var m = dat["osm_marker"];
+    g_bus_marker_layer.removeMarker(m);
+    delete g_bus_marker[busid].osm_marker;
+    delete g_bus_marker[busid].icon;
+    delete g_bus_marker[busid].size;
+    delete g_bus_marker[busid].offset;
+  }
+
+  var lonlat =  new OpenLayers.LonLat( dat.Long, dat.Lat )
+      .transform(
+        new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984
+        g_map.getProjectionObject() // to Spherical Mercator Projection
+      );
+
+  var scale_factor = 1.0;
+  var bus_w = g_param.bus_w;
+  var bus_h = g_param.bus_h;
+
+  if ( g_map.zoom < 8 ) { return; }
+
+  if ( ( g_map.zoom <= 13 ) && ( g_map.zoom >= 8) )
+  {
+    scale_factor = Math.exp( Math.log(2) * (g_map.zoom-14) );
+    bus_w *= scale_factor;
+    bus_h *= scale_factor;
+  }
+
+  var size = new OpenLayers.Size(bus_w,bus_h);
+  var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
+
+  var icon ;
+  if (busType == "bus") {
+    iheading = Math.floor( (parseInt( dat.Heading ) + 23) / 45 );
+    if (iheading > 7) { iheading = 0; }
+
+    if (dat["Route"] in g_bus_route_hash) {
+      icon = new OpenLayers.Icon("img/bus_route_icon/bus_gw_r" + dat["Route"] + "_"  + headingLookup[iheading] + ".png", size, offset);
+    } else {
+      icon = new OpenLayers.Icon("img/bus_gw_"  + headingLookup[iheading] + ".png", size, offset);
+    }
+    icon.setOpacity(0.75);
+  } else {
+    icon = new OpenLayers.Icon("img/underground_" + busType + ".png", size, offset);
+  }
+  dat["osm_marker"] = new OpenLayers.Marker( lonlat, icon );
+  dat["osm_marker"].events.register('mousedown',
+                                    dat["osm_marker"],
+                                    (function(xx) { return function() { handlePopup(xx); }; })(busid) );
+  dat["icon"] = icon;
+  dat["size"] = size;
+  dat["offset"] = offset;
+
+  g_bus_marker_layer.addMarker( dat["osm_marker"] );
+
+}
+
+
 
 function drawMarker(tripid, color) {
   headingLookup = [ "0", "45", "90", "135", "180", "225", "270", "315" ];
@@ -268,6 +381,12 @@ function drawMarker(tripid, color) {
     iheading = Math.floor( (parseInt( dat.Heading ) + 23) / 45 );
     if (iheading > 7) { iheading = 0; }
     icon = new OpenLayers.Icon("img/metro_" + color + "_" + headingLookup[iheading] + "_fade.png", size, offset);
+  /*
+  } else if (color == "bus") {
+    iheading = Math.floor( (parseInt( dat.Heading ) + 23) / 45 );
+    if (iheading > 7) { iheading = 0; }
+    icon = new OpenLayers.Icon("img/metro_" + color + "_"  + headingLookup[iheading] + "_fade.png", size, offset);
+    */
   } else {
     icon = new OpenLayers.Icon("img/underground_" + color + ".png", size, offset);
   }
@@ -284,8 +403,82 @@ function drawMarker(tripid, color) {
 }
 
 
+function updateBusMarker(data, bus) {
+
+  //console.log("updating bus");
+
+  var vehicle = data[bus].body.vehicle;
+
+  for ( var v in vehicle ) {
+    var id = vehicle[v].$.id;
+    if ( !(id in g_bus_marker) ) {
+      g_bus_marker[id] = { Lat: 0, Long : 0, Color : "bus", Dirty:0 };
+    }
+    g_bus_marker[id].Dirty = 0;
+  }
+
+  /*
+  // Create new entries if they don't exist
+  //
+  for (var v in vehicle ) {
+    var id = vehicle[v].$.id;
+    var lat = vehicle[v].$.lat;
+    var lon = vehicle[v].$.lon;
+    var head = vehicle[v].$.heading;
+    var route = vehicle[v].$.routeTag;
+
+  }
+  */
+
+  // Draw new entries and unmark them for deletion if we're drawing
+  // them.
+  //
+  for (var v in vehicle) {
+
+    var id = vehicle[v].$.id;
+    var lat = vehicle[v].$.lat;
+    var lon = vehicle[v].$.lon;
+    var head = vehicle[v].$.heading;
+    var secSince = vehicle[v].$.secsSinceReport;
+    var route = vehicle[v].$.routeTag;
+
+    var s = Math.floor(new Date().getTime() / 1000.0) - parseInt(secSince);
+
+    g_bus_marker[id].Timestamp = s;
+    g_bus_marker[id].Heading = head;
+    g_bus_marker[id].Dirty = 1;
+    g_bus_marker[id].Route = route;
+
+    oldlat = g_bus_marker[id].Lat;
+    oldlon = g_bus_marker[id].Long;
+
+    if ( ( Math.abs(oldlat - lat) > 0.001 ) ||
+         ( Math.abs(oldlon - lon) > 0.001 ) ) {
+
+      g_bus_marker[ id ].Lat     = lat;
+      g_bus_marker[ id ].Long    = lon;
+
+      drawBusMarker( id, "bus" );
+    }
+
+
+  }
+
+  // Delete stale entries
+  //
+  for (var v in vehicle ) {
+    var id = vehicle[v].$.id;
+    if (g_bus_marker[id].Dirty == 0) {
+      console.log("REMOVING", id )
+      g_bus_marker_layer.removeMarker( g_bus_marker[id]["osm_marker"] );
+      delete g_bus_marker[ id ];
+    }
+  }
+
+  g_bus_marker_layer.redraw();
+}
+
 function updateMarker(data, color) {
-  var dirty = 0;
   var trips = data[color].TripList.Trips;
 
   // Mark all entries for deletion
@@ -334,9 +527,6 @@ function updateMarker(data, color) {
         drawMarker( tripid, color );
       }
 
-
-      dirty=1;
-
     } else { }
   }
 
@@ -352,19 +542,6 @@ function updateMarker(data, color) {
     }
   }
 
-  /*
-  for (var x in trips) {
-    if ("Position" in trips[x]) {
-      if (g_marker[ tripid ].Dirty == 0) {
-        console.log("REMOVING")
-        g_marker_layer.removeMarker( trips[x]["osm_marker"] );
-
-        delete g_marker[ tripid ];
-      }
-    }
-  }
-  */
-
   g_marker_layer.redraw();
 }
 
@@ -379,6 +556,12 @@ function rtupdate(data) {
   // no green :(
   if ("green" in data) { updateMarker(data, "green"); }
 
+
+}
+
+function rtbusupdate(data) {
+  //console.log("rtbusupdate:", data);
+  if ("bus" in data) { updateBusMarker(data, "bus"); }
 }
 
 var g_SERVER_ADDR = "bostontraintrack.com";
@@ -393,52 +576,45 @@ function setupRTStreams() {
   });
 }
 
+function setupRTBStreams() {
+  g_bus_socket = io('http://' + g_SERVER_ADDR + ':8182');
+  g_bus_socket.on('connect', function() {
+    if (g_verbose) { console.log("connected!"); }
+    g_bus_socket.on('update', rtbusupdate );
+    g_bus_socket.on('disconnect', function() { console.log("disconnected"); });
+  });
+}
+
+function teardownRTBStreams() {
+  if (g_bus_socket) {
+    console.log("disconnecting!");
+    g_bus_socket.disconnect();
+  }
+  //delete g_bus_socket;
+  //g_bus_socket = 0;
+
+  //g_bus_socket.connect();
+  //g_bus_socket = undefined;
+}
+
 //
 //--------------------------
 
 function mapEvent(ev) {
   if (ev.type == "zoomend") {
-    //console.log("zoomend! " + g_map.zoom);
 
     if ( g_map.zoom <= 12 )
     {
-      //console.log("bonk");
 
-      for (var bus_id in g_marker) {
-        drawMarker( bus_id, g_marker[bus_id].Color );
+      for (var metro_id in g_marker) {
+        drawMarker( metro_id, g_marker[metro_id].Color );
+      }
+
+      for (var bus_id in g_bus_marker) {
+        drawBusMarker( bus_id, "bus" );
       }
 
       drawStops();
-
-      return;
-
-      var dz = g_map.zoom - 12;
-
-      scale_factor = Math.exp( Math.log(2) * (g_map.zoom-12) );
-      console.log(">>> " , scale_factor);
-
-      if (dz < -3) { return; }
-
-      var count=0;
-      for (var track_id in g_marker) {
-        console.log("track_id: ", track_id);
-        count++;
-
-        var ico = g_marker[track_id].icon;
-        var sz = g_marker[track_id].size;
-        var ofst = new OpenLayers.Pixel(-(sz.w/2), -sz.h);
-
-        sz = new OpenLayers.Size(scale_factor*sz.w, scale_factor*sz.h);
-        ico.setSize(sz);
-        ico.setOffset(ofst);
-
-        g_marker[track_id].size = sz;
-        g_marker[track_id].icon = ico;
-
-        console.log(ico);
-      }
-
-      console.log("count:", count);
 
     }
     else
@@ -447,31 +623,13 @@ function mapEvent(ev) {
       for (var bus_id in g_marker) {
         drawMarker( bus_id, g_marker[bus_id].Color );
       }
-      drawStops();
 
-      return;
-
-
-      var count=0;
-      for (var track_id in g_marker) {
-        //console.log("track_id: ", track_id);
-        count++;
-
-        var ico = g_marker[track_id].icon;
-        var sz = g_marker[track_id].size;
-        var ofst = new OpenLayers.Pixel(-(sz.w/2), -sz.h);
-
-
-        sz = new OpenLayers.Size( 36, 45 );
-        ico.setSize(sz);
-        ico.setOffset(ofst);
-
-        g_marker[track_id].size = sz;
-        g_marker[track_id].icon = ico;
-
-        //console.log(ico);
+      for (var bus_id in g_bus_marker) {
+        drawBusMarker( bus_id, "bus" );
       }
 
+
+      drawStops();
 
     }
 
@@ -581,6 +739,27 @@ function initMap() {
 
   //var zoom=14;
 
+
+  // Toggle buses and such
+  //
+  /*
+  g_selection_layer = new OpenLayers.Layer.Markers( "Selection" );
+  g_map.addLayer( g_selection_layer );
+  g_map.setLayerIndex( g_selection_layer, 999 );
+  var selectionSize = new OpenLayers.Size( g_param.bus_w, g_param.bus_h );
+  var selectionOffset = new OpenLayers.Pixel( -(selectionSize.w/2), -(selectionSize.h/2) );
+  var selectionIcon = new OpenLayers.Icon( "img/bus_gw_sq.png", selectionSize, selectionOffset );
+  */
+
+
+
+
+  g_bus_marker_layer = new OpenLayers.Layer.Markers( "Bus" );
+  g_map.addLayer(g_bus_marker_layer);
+  g_map.setLayerIndex(g_bus_marker_layer, 98);
+
+
+
   g_marker_layer = new OpenLayers.Layer.Markers( "Metro" );
   g_map.addLayer(g_marker_layer);
   g_map.setLayerIndex(g_marker_layer, 99);
@@ -628,9 +807,43 @@ function initMap() {
 
 }
 
+function toggleBus() {
+
+  var b = document.getElementById('busToggleInput');
+
+  if (g_toggle_input == 0) {
+    g_bus_socket.emit("enable");
+    b.src = "img/bus_gw_sq_inv.png";
+    g_toggle_input = 1;
+  } else if (g_toggle_input == 1 ) {
+
+    g_bus_socket.emit("disable");
+    b.src = "img/bus_gw_sq.png";
+    g_toggle_input = 0;
+
+    // Delete stale entries
+    //
+    for (var id in g_bus_marker) {
+      g_bus_marker_layer.removeMarker( g_bus_marker[id]["osm_marker"] );
+      delete g_bus_marker[ id ];
+    }
+    g_bus_marker_layer.redraw();
+
+  }
+
+  $("#busToggleInput").blur();
+
+}
+
 
 $(document).ready( function() {
   initMap();
   setupRTStreams();
+  setupRTBStreams();
+
+  var b = document.getElementById('busToggle');
+  b.style.top = '100px';
+  b.style.left = '5px';
+
 });
 

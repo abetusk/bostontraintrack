@@ -33,8 +33,9 @@ var g_marker_layer ;
 var g_bus_marker = {};
 var g_bus_marker_layer ;
 
-var g_toggle_input = 0;
+var g_bus_toggle_input = 0;
 var g_gps_toggle_input = 0;
+var g_commuter_toggle_input = 0;
 
 var g_geolocate;
 
@@ -839,15 +840,15 @@ function toggleBus() {
 
   var b = document.getElementById('busToggleInput');
 
-  if (g_toggle_input == 0) {
+  if (g_bus_toggle_input == 0) {
     g_bus_socket.emit("enable");
     b.src = "img/bus_gw_sq_inv.png";
-    g_toggle_input = 1;
-  } else if (g_toggle_input == 1 ) {
+    g_bus_toggle_input = 1;
+  } else if (g_bus_toggle_input == 1 ) {
 
     g_bus_socket.emit("disable");
     b.src = "img/bus_gw_sq.png";
-    g_toggle_input = 0;
+    g_bus_toggle_input = 0;
 
     // Delete stale entries
     //
@@ -860,6 +861,24 @@ function toggleBus() {
   }
 
   $("#busToggleInput").blur();
+
+}
+
+function toggleCommuter() {
+
+  var b = document.getElementById('commuterToggleInput');
+
+  if (g_commuter_toggle_input == 0) {
+    b.src = "img/train_sq_inv.png";
+    g_commuter_toggle_input = 1;
+  } else if (g_commuter_toggle_input == 1 ) {
+
+    b.src = "img/train_sq.png";
+    g_commuter_toggle_input = 0;
+
+  }
+
+  $("#commuterToggleInput").blur();
 
 }
 
@@ -890,8 +909,12 @@ $(document).ready( function() {
   b.style.top = '100px';
   b.style.left = '5px';
 
-  var b = document.getElementById('gpsToggle');
+  var b = document.getElementById('commuterToggle');
   b.style.top = '200px';
+  b.style.left = '5px';
+
+  var b = document.getElementById('gpsToggle');
+  b.style.top = '300px';
   b.style.left = '5px';
 
 });

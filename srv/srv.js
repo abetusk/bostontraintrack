@@ -1,3 +1,24 @@
+/*
+
+    Copyright (C) 2013 Abram Connelly
+
+    This file is part of bostontraintrack.
+
+    bostontraintrack is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    bostontraintrack is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with bostontraintrack.  If not, see <http://www.gnu.org/licenses/>.
+
+*/
+
 var http = require("http");
 var sockio = require('socket.io')();
 
@@ -28,16 +49,13 @@ for (var rbo in global_data.path) {
 
         try {
 
-
-          console.log("cp0");
-
           var req = http.request( opt, function(res) {
             res.setEncoding('utf8');
             var body = '';
             res.on('data', function(chunk) { body += chunk; });
             res.on('end', function() {
 
-              console.log(body);
+              //console.log(body);
 
               try  {
                 jr = JSON.parse(body);
@@ -52,23 +70,6 @@ for (var rbo in global_data.path) {
           req.on('error', function(err) { console.log("got http erro:", err); });
           req.end();
 
-          /*
-          http.get(opt, function(res) {
-            res.setEncoding('utf8');
-            var body = '';
-            res.on('data', function(chunk) { body += chunk; });
-            res.on('end', function() {
-
-              console.log(body);
-
-              jr = JSON.parse(body);
-              global_data[RBO] = jr;
-
-            });
-          });
-          */
-
-          console.log("cp1");
         } catch (e) {
           console.log("http: got e:", e);
         }

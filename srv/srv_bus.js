@@ -1,3 +1,25 @@
+/*
+
+    Copyright (C) 2013 Abram Connelly
+
+    This file is part of bostontraintrack.
+
+    bostontraintrack is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    bostontraintrack is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with bostontraintrack.  If not, see <http://www.gnu.org/licenses/>.
+
+*/
+
+
 var http = require("http");
 var sockio = require('socket.io')();
 var xmlparse = require("xml2js").parseString;
@@ -9,7 +31,6 @@ var global_status = { };
 
 var global_data = { n: 0, 
                     interval : { bus:13000 },
-                    //interval : { bus:3000 },
                     port : 80,
                     url : "webservices.nextbus.com",
                     path : { bus : "/service/publicXMLFeed?command=vehicleLocations&a=mbta&t=0" }
@@ -118,7 +139,6 @@ function pushSingleUpdate( cli_id ) {
 }
 
 function pushUpdate() {
-  //console.log(global_data.n);  
 
   var conn_count = 0;
   for (var cli_id in global_connect) {
@@ -126,24 +146,6 @@ function pushUpdate() {
     var colors = [ "bus" ];
 
     pushSingleUpdate( cli_id );
-
-/*
-    for (var i in colors) {
-      if (colors[i] in global_data) {
-        var dat = {}
-        dat[ colors[i] ] = global_data[ colors[i] ];
-	
-	try {
-          if (global_status[ cli_id ].enable) {
-            global_connect[ cli_id ].emit("update", dat );
-          }
-	} catch (ee) {
-          console.log("when trying to emit to cli_id: ", cli_id, " got error:", ee );
-	}
-
-      }
-    }
-*/
 
   }
 
@@ -159,46 +161,5 @@ function pushUpdate() {
 }
 
 setInterval( pushUpdate, 10000 );
-
-/*
-setInterval( function() { 
-  //console.log(global_data.n);  
-
-  var conn_count = 0;
-  for (var cli_id in global_connect) {
-    conn_count++;
-    var colors = [ "bus" ];
-
-    for (var i in colors) {
-      if (colors[i] in global_data) {
-        var dat = {}
-        dat[ colors[i] ] = global_data[ colors[i] ];
-	
-	try {
-          if (global_status[ cli_id ].enable) {
-            global_connect[ cli_id ].emit("update", dat );
-          }
-	} catch (ee) {
-          console.log("when trying to emit to cli_id: ", cli_id, " got error:", ee );
-	}
-
-      }
-    }
-
-  }
-
-  var dt = Date.now();
-  var dts = dt.toString();
-
-  var enable_count=0;
-  for (var i in global_status) {
-    if (global_status[i].enable) { enable_count++; }
-  }
-
-  console.log( dts +  " connected clients:", conn_count, ", (", global_data.n, "), (enabled: ", enable_count, ")" );
-}, 5000 );
-*/
-
-
 
 

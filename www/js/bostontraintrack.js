@@ -34,6 +34,9 @@ var g_bus_marker = {};
 var g_bus_marker_layer ;
 
 var g_toggle_input = 0;
+var g_gps_toggle_input = 0;
+
+var g_geolocate;
 
 var g_selection_layer;
 
@@ -796,7 +799,8 @@ function initMap() {
   g_map.addLayer(g_stop_layer);
   g_map.setLayerIndex( g_stop_layer, 0 )
 
-  var geolocate = new OpenLayers.Control.Geolocate({
+  //var geolocate = new OpenLayers.Control.Geolocate({
+  g_geolocate = new OpenLayers.Control.Geolocate({
     bind: false,
     geolocationOptions: {
         enableHighAccuracy: false,
@@ -805,9 +809,11 @@ function initMap() {
     }
   });
 
-  g_map.addControl(geolocate);
+  //g_map.addControl(geolocate);
+  g_map.addControl(g_geolocate);
 
-  geolocate.events.register("locationupdated",geolocate,function(e) {
+  //geolocate.events.register("locationupdated",geolocate,function(e) {
+  g_geolocate.events.register("locationupdated",g_geolocate,function(e) {
     lonLat = new OpenLayers.LonLat(e.position.coords.longitude, e.position.coords.latitude).transform(
         new OpenLayers.Projection("EPSG:4326"),
         g_map.getProjectionObject()
@@ -815,7 +821,7 @@ function initMap() {
     g_map.setCenter(lonLat, g_zoom);
   });
 
-  geolocate.activate();
+  //geolocate.activate();
 
   var lat = 42.3583183;
   var lon = -71.0584536;
@@ -857,6 +863,23 @@ function toggleBus() {
 
 }
 
+function toggleGPS() {
+
+  var b = document.getElementById('gpsToggleInput');
+
+  if (g_gps_toggle_input == 0) {
+    g_geolocate.activate();
+    b.src = "img/locator_sq_inv.png";
+    g_gps_toggle_input = 1;
+  } else if (g_gps_toggle_input == 1 ) {
+    b.src = "img/locator_sq.png";
+    g_gps_toggle_input = 0;
+  }
+
+  $("#gpsToggleInput").blur();
+
+}
+
 
 $(document).ready( function() {
   initMap();
@@ -865,6 +888,10 @@ $(document).ready( function() {
 
   var b = document.getElementById('busToggle');
   b.style.top = '100px';
+  b.style.left = '5px';
+
+  var b = document.getElementById('gpsToggle');
+  b.style.top = '200px';
   b.style.left = '5px';
 
 });

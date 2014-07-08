@@ -16,7 +16,7 @@
    <script src="js/bostontraintrack.js"></script>
 
    <style>
-     .busToggle
+     .imgButtonToggle
      {
        opacity: 0.55;
        position: absolute;
@@ -30,7 +30,7 @@
     <div id="mapdiv"></div>
     <!-- <script src="http://www.openlayers.org/api/OpenLayers.js"></script> -->
 
-    <div id="busToggle" class="busToggle">
+    <div id="busToggle" class="imgButtonToggle">
       <input
         id='busToggleInput'
         type='image'
@@ -38,6 +38,16 @@
         style=' height:47px; width:38px; '
         value='nothing'
         onclick='toggleBus();' />
+    </div>
+
+    <div id="gpsToggle" class="imgButtonToggle">
+      <input
+        id='gpsToggleInput'
+        type='image'
+        src='img/locator_sq.png'
+        style=' height:47px; width:38px; '
+        value='nothing'
+        onclick='toggleGPS();' />
     </div>
     <!-- style=' height:38px; width:32px; ' -->
 

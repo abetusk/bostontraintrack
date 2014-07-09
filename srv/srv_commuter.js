@@ -28,6 +28,21 @@ var g_verbose = 0;
 var global_connect = { };
 var global_status = { };
 
+var g_line_vehicle_data = { 
+  "Greenbush Line" : {},
+  "Kingston/Plymouth Line" : {},
+  "Middleborough/Lakeville Line" : {},
+  "Fairmount Line" : {},
+  "Providence/Stoughton Line" : {},
+  "Franklin Line" : {},
+  "Needham Line" : {},
+  "Framingham/Worcester Line" : {},
+  "Fitchburg Line" : {},
+  "Lowell Line" : {},
+  "Haverhill Line" : {},
+  "Newburyport/Rockport Line" : {}
+};
+
 var global_data = { n: 0, 
                     interval : 10000,
                     port : 80,
@@ -65,9 +80,149 @@ var global_data = { n: 0,
                       "Haverhill Line" : "/lib/RTCR/RailLine_11.json",
                       "Newburyport/Rockport Line" : "/lib/RTCR/RailLine_12.json"
                     }
+
                   };
 
 console.log("setting up lines...");
+
+
+function flushSingleClientData( cli_id )
+{
+
+  for (var route in g_line_vehicle_data)
+  {
+    var train_data = g_line_vehicle_data[route];
+    for (var vid in train_data)
+    {
+
+      try 
+      {
+        global_connect[ cli_id ].emit( "update", train_data[vid] );
+      } catch (ee) {
+        console.log("ERROR: flushing to client", cli_id, "(vehicle_id", vid , ") failed");
+      }
+
+    }
+  }
+
+}
+
+function pushData( vehicle_data ) 
+{
+
+  var conn_count = 0;
+  var enable_count=0;
+
+  var dt = Date.now();
+  var dts = dt.toString();
+
+
+  for (var cli_id in global_connect) 
+  {
+    conn_count++;
+
+    try 
+    {
+      if (global_status[ cli_id ].enable) 
+      {
+        global_connect[ cli_id ].emit( "update", vehicle_data );
+      }
+    } catch (ee) {
+      console.log("ERROR: pushing to client", cli_id, "(vehicle_id", vehicle_id, ") failed");
+    }
+
+  }
+
+  console.log( dts +  " connected clients:", conn_count, ", (", global_data.n, "), (enabled: ", enable_count, "), vehicle_id:", vehicle_data.id );
+
+
+}
+
+
+function updateCommuterRail( linename, body ) 
+{
+
+  console.log("updating line:", linename);
+  //console.log(body);
+
+  var json_data;
+  try  { json_data = JSON.parse(body); } 
+  catch (ee) { console.log("json parse error:", ee ); return; }
+
+  var data = g_line_vehicle_data[linename];
+
+  for ( var vehicle_id in data )
+  {
+    data[vehicle_id].status = "delete";
+  }
+
+  // Save it in case we want it
+  //
+  global_data[linename] = json_data;
+
+  for (var ind in json_data["Messages"])
+  {
+    var entry = json_data.Messages[ind];
+    var vid = entry["Vehicle"];
+
+    latstr = entry["Latitude"];
+    lonstr = entry["Longitude"];
+
+    if (vid == "") 
+    {
+      console.log("empty vid, skipping");
+      continue;
+    }
+
+    if ( (latstr == "") || (lonstr == "") ) 
+    { 
+
+      console.log("  " + linename + ">>> " + vid + " DEL");
+
+      data[vid] = { id : vid, route : linename, status : "delete" }; 
+      continue;
+    }
+
+    var lat = parseFloat(entry["Latitude"]);
+    var lon = parseFloat(entry["Longitude"]);
+
+    console.log("   " + linename + ">>>>" + vid + ", (" + lat + ", " + lon + ") [" + latstr + " " + lonstr + "]"  );
+
+    var stat = "none";
+    if (vid in data)
+    {
+      if ( (Math.abs(lat - data[vid].lat) > 0.001) ||
+           (Math.abs(lon - data[vid].lon) > 0.001) )
+      {
+        data[vid].lat = lat;
+        data[vid].lon = lon;
+        data[vid].status = "update";
+        data[vid].heading = entry["Heading"];
+        data[vid].id = vid;
+        data[vid].route = linename;
+      }
+
+    } else {
+      data[vid] = { id : vid, route: linename, lat : lat, lon : lon, status : "new", heading : entry["Heading"] };
+    }
+
+  }
+
+  var remove_list = [];
+
+  for ( var vid in data )
+  {
+    pushData( data[vid] );
+    if (data[vid].status == "delete") { remove_list.push(vid); }
+  }
+
+  for (var ind=0; ind<remove_list.length; ind++)
+  {
+    delete data[ remove_list[ind] ];
+  }
+
+
+}
 
 function fetchCommuterLine() {
   var linename = global_data.name[ global_data.cur_line ]
@@ -75,37 +230,23 @@ function fetchCommuterLine() {
   console.log("line:" , linename);
   console.log("cur_line:", global_data.cur_line, ", n_line:", global_data.n_line);
 
-  global_data.cur_line += 1;
+  global_data.cur_line++ ;
   global_data.cur_line %= global_data.n_line;
 
-  if (g_verbose) { console.log("udpating " , linename ); }
+  if (g_verbose) { console.log("updating " , linename ); }
   var opt = { host: global_data.url, port:global_data.port, path: global_data.path[linename] };
 
   console.log("opt:", opt);
 
   try {
-
     var req = http.request( opt, function(res) {
       res.setEncoding('utf8');
       var body = '';
       res.on('data', function(chunk) { body += chunk; });
-      res.on('end', function() {
-
-        console.log(body);
-
-        try  {
-          jr = JSON.parse(body);
-          global_data[linename] = jr;
-        } catch (ee) {
-          console.log("json parse error:", ee );
-        }
-
-      });
+      res.on('end', function() { updateCommuterRail( linename, body ); } );
     });
-
     req.on('error', function(err) { console.log("got http erro:", err); });
     req.end();
-
   } catch (err2) {
     console.log("http request error? " + err2);
   }
@@ -113,6 +254,7 @@ function fetchCommuterLine() {
 }
 
 // Do an initial burst to setup all commuter lines
+//
 for (var line in global_data.path) {
   fetchCommuterLine();
 }
@@ -131,7 +273,7 @@ sockio.on('connection', function(socket) {
   socket.on("enable", function(msg) {
     console.log("enable:", local_name);
     global_status[ local_name ].enable = true;
-    pushSingleUpdate( local_name );
+    flushSingleClientData( local_name );
   });
 
   socket.on("disable", function(msg) {
@@ -157,51 +299,4 @@ sockio.on('connection', function(socket) {
 });
 
 sockio.listen(8183);
-
-function pushSingleUpdate( cli_id ) {
-
-  for (var i=0; i<global_data.n_line; i++) {
-    linename = global_data.name[i];
-
-    console.log("checking linename:", linename);
-
-    if (linename in global_data) {
-      var dat = {}
-      dat[ linename ] = global_data[ linename ];
-
-      try {
-        if (global_status[ cli_id ].enable) {
-          global_connect[ cli_id ].emit("update", dat );
-        }
-      } catch (ee) {
-        console.log("when trying to emit to cli_id: ", cli_id, " got error:", ee );
-      }
-
-    }
-  }
-
-}
-
-function pushUpdate() {
-
-  var conn_count = 0;
-  for (var cli_id in global_connect) {
-    conn_count++;
-    pushSingleUpdate( cli_id );
-  }
-
-  var dt = Date.now();
-  var dts = dt.toString();
-
-  var enable_count=0;
-  for (var i in global_status) {
-    if (global_status[i].enable) { enable_count++; }
-  }
-
-  console.log( dts +  " connected clients:", conn_count, ", (", global_data.n, "), (enabled: ", enable_count, ")" );
-}
-
-setInterval( pushUpdate, 10000 );
-
-
 

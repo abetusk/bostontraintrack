@@ -76,10 +76,16 @@ function printdata(data, color) {
 
 function createPopUp(feature) {
   var text;
+  var now = (new Date).getTime();
+  var timeStamp = feature.data.timeStamp;
+  var seconds = (now - timeStamp)/1000;
+  console.log(now);
+  console.log(timeStamp);
+  console.log(seconds);
   if (feature.data.color !== "bus") {
-    text = "<div style='font-size:.8em'>Line: " + feature.data.color + "<br>Route: " + feature.data.route + "<br>Next Stop: " + feature.data.predictionStop + "<br>Arriving In: " + feature.data.predictionTime + "</div>";
+    text = "<div style='font-size:.8em'>" + feature.data.route + "<br>Arriving at " + feature.data.predictionStop + " in ~" + feature.data.predictionTime + "<br> Updated "+seconds+" seconds ago</div>";
   } else {
-    text = "<div style='font-size:.8em'>Line: " + feature.data.color + "<br>Route: " + feature.data.route + "</div>"
+    text = "<div style='font-size:.8em'>Line: " + feature.data.color + "<br>Route: " + feature.data.route + "<br>Updated "+seconds+" seconds ago</div>"
   }
   var popup = new OpenLayers.Popup.FramedCloud("popup",
     OpenLayers.LonLat.fromString(feature.geometry.toShortString()),
@@ -150,6 +156,7 @@ function drawMarker(tripid, color) {
         predictionTime: trip.predTime,
         route: trip.route,
         color: trip.Color,
+        timeStamp: trip.Timestamp,
       }, {
         externalGraphic: icon,
         graphicOpacity: opacity,
@@ -245,8 +252,8 @@ function updateBusMarker(data, bus) {
   for (var v in vehicle) {
     var id = vehicle[v].$.id;
     if (g_bus_marker[id].Dirty == 0) {
-      console.log("REMOVING", id)
-      g_bus_marker_layer.removeMarker(g_bus_marker[id]["osm_marker"]);
+      console.log("REMOVING", id);
+      g_bus_marker_layer.removeFeatures(g_bus_marker[id].osm_marker);
       delete g_bus_marker[id];
     }
   }
@@ -390,8 +397,6 @@ function teardownRTBStreams() {
 function mapEvent(ev) {
   if (ev.type == "zoomend") {
 
-    if (g_map.zoom <= 12) {
-
       for (var metro_id in g_marker) {
         drawMarker(metro_id, g_marker[metro_id].Color);
       }
@@ -402,17 +407,6 @@ function mapEvent(ev) {
 
       drawStops();
 
-    } else {
-
-      for (var metro_id in g_marker) {
-        drawMarker(metro_id, g_marker[metro_id].Color);
-      }
-
-      for (var bus_id in g_bus_marker) {
-        drawMarker(bus_id, "bus");
-      }
-      drawStops();
-    }
   } else if (ev.type == "move") {
     //console.log("move!");
   } else if (ev.type == "moveend") {
@@ -507,7 +501,8 @@ function initMap() {
       'featureunselected': function (evt) {
         var feature = evt.feature;
         destoryPopUp(feature);
-      }
+      },
+    ratio: 1,
     }
   });
   g_map.addLayer(g_bus_marker_layer);
@@ -524,7 +519,8 @@ function initMap() {
       'featureunselected': function (evt) {
         var feature = evt.feature;
         destoryPopUp(feature);
-      }
+      },
+    ratio: 1,
     }
   });
 
@@ -594,7 +590,7 @@ function toggleBus() {
     // Delete stale entries
     //
     for (var id in g_bus_marker) {
-      g_bus_marker_layer.removeMarker(g_bus_marker[id]["osm_marker"]);
+      g_bus_marker_layer.removeFeatures(g_bus_marker[id]["osm_marker"]);
       delete g_bus_marker[id];
     }
     g_bus_marker_layer.redraw();

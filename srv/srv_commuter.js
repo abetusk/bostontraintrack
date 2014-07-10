@@ -50,7 +50,11 @@ var global_data = { n: 0,
                     url : "developer.mbta.com",
 
                     cur_line : 0,
+
                     n_line : 12,
+                    //DEBUG
+                    //n_line : 1,
+
                     name : [
                       "Greenbush Line",
                       "Kingston/Plymouth Line",
@@ -89,11 +93,20 @@ console.log("setting up lines...");
 function flushSingleClientData( cli_id )
 {
 
+  console.log(">>>>> flushing", cli_id );
+
   for (var route in g_line_vehicle_data)
   {
+
+    console.log("  ", route, ">>");
+
     var train_data = g_line_vehicle_data[route];
     for (var vid in train_data)
     {
+
+      var s = JSON.stringify( train_data[vid] );
+      console.log("      ", vid, ">>>", s);
+      //console.log( train_data[vid] );
 
       try 
       {
@@ -125,6 +138,9 @@ function pushData( vehicle_data )
     {
       if (global_status[ cli_id ].enable) 
       {
+
+        console.log("  pushing " + cli_id + ">>>" + vehicle_data.id );
+
         global_connect[ cli_id ].emit( "update", vehicle_data );
       }
     } catch (ee) {
@@ -165,12 +181,14 @@ function updateCommuterRail( linename, body )
     var entry = json_data.Messages[ind];
     var vid = entry["Vehicle"];
 
+    //if (vid != "" ){ console.log("GOT VID:", vid); }
+
     latstr = entry["Latitude"];
     lonstr = entry["Longitude"];
 
     if (vid == "") 
     {
-      console.log("empty vid, skipping");
+      //console.log("empty vid, skipping");
       continue;
     }
 
@@ -186,24 +204,42 @@ function updateCommuterRail( linename, body )
     var lat = parseFloat(entry["Latitude"]);
     var lon = parseFloat(entry["Longitude"]);
 
-    console.log("   " + linename + ">>>>" + vid + ", (" + lat + ", " + lon + ") [" + latstr + " " + lonstr + "]"  );
+    console.log("   " + linename + ">>>>" + vid + ", (" + lat + ", " + lon + ") [" + latstr + " " + lonstr + "] " + entry["Heading"]  );
 
-    var stat = "none";
+    //console.log("vid in data?", (vid in data) );
+
     if (vid in data)
     {
       if ( (Math.abs(lat - data[vid].lat) > 0.001) ||
            (Math.abs(lon - data[vid].lon) > 0.001) )
       {
+
+        var dlat = Math.abs(lat - data[vid].lat);
+        var dlon = Math.abs(lon - data[vid].lon);
+
+        console.log("  update>>", vid, lat, lon, dlat, dlon, entry["Heading"]);
+
+        data[vid].timestamp = entry["TimeStamp"];
         data[vid].lat = lat;
         data[vid].lon = lon;
         data[vid].status = "update";
         data[vid].heading = entry["Heading"];
         data[vid].id = vid;
         data[vid].route = linename;
+      } else  {
+
+        if (data[vid].status == "delete") {
+          data[vid].status = "idle";
+        }
+
       }
 
+
     } else {
-      data[vid] = { id : vid, route: linename, lat : lat, lon : lon, status : "new", heading : entry["Heading"] };
+
+      data[vid] = { id : vid, timestamp : entry["TimeStamp"], route: linename, lat : lat, lon : lon, status : "new", heading : entry["Heading"] };
+
+      console.log("  new>>", vid, lat, lon, entry["Heading"] );
     }
 
   }
@@ -212,7 +248,10 @@ function updateCommuterRail( linename, body )
 
   for ( var vid in data )
   {
-    pushData( data[vid] );
+
+    if ( data[vid].status != "idle" ) {
+      pushData( data[vid] );
+    }
     if (data[vid].status == "delete") { remove_list.push(vid); }
   }
 
@@ -222,6 +261,16 @@ function updateCommuterRail( linename, body )
   }
 
 
+}
+
+function debugPrint() {
+  console.log("DEBUG");
+  for (var route in g_line_vehicle_data) {
+    var train_data = g_line_vehicle_data[route];
+    for (var vid in train_data) {
+      console.log( vid, train_data[vid] );
+    }
+  }
 }
 
 function fetchCommuterLine() {
@@ -243,7 +292,11 @@ function fetchCommuterLine() {
       res.setEncoding('utf8');
       var body = '';
       res.on('data', function(chunk) { body += chunk; });
-      res.on('end', function() { updateCommuterRail( linename, body ); } );
+      res.on('end', function() { 
+        updateCommuterRail( linename, body ); 
+
+        //debugPrint();
+      });
     });
     req.on('error', function(err) { console.log("got http erro:", err); });
     req.end();
@@ -258,6 +311,7 @@ function fetchCommuterLine() {
 for (var line in global_data.path) {
   fetchCommuterLine();
 }
+//fetchCommuterLine();
 
 setInterval( fetchCommuterLine, global_data.interval );
 
@@ -279,14 +333,6 @@ sockio.on('connection', function(socket) {
   socket.on("disable", function(msg) {
     console.log("disable:", local_name);
     global_status[ local_name ].enable = false;
-  });
-
-
-  socket.on("myevent", function(msg) {
-    console.log("got myevent!");
-    console.log(msg);
-
-    socket.emit("update", { n: global_data.n } );
   });
 
   socket.on("disconnect", function() { 

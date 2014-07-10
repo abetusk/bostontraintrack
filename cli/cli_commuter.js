@@ -25,6 +25,7 @@ function printdata(data, color) {
 
 function onupdate(data) {
 
+  console.log("update>>>");
   console.log(data);
 
 }
@@ -33,13 +34,20 @@ console.log("...");
 
 socket.on("connect", function() {
 
-  console.log("connected!");
+  console.log("connected! -->");
 
-  socket.on("myevent", function(data) { console.log("this is my event!"); console.log(data); } );
-  socket.on("update", onupdate);
-  socket.on("disconnect", function() { console.log("disconnected :("); } );
+  //socket.on("update", onupdate);
+  //socket.on("disconnect", function() { console.log("disconnected :("); } );
 
+  //console.log("enabling!");
   socket.emit("enable");
+
 });
+
+socket.on("update", onupdate);
+socket.on("disconnect", function() { console.log("disconnected :("); } );
+
+//console.log("enabling!");
+//socket.emit("enable");
 
 

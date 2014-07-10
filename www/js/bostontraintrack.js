@@ -941,11 +941,6 @@ function toggleCommuter() {
     g_commuter_toggle_input = 0;
 
     for (var id in g_commuter_marker) {
-
-      console.log("toggle delete commuter", id );
-      console.log( g_commuter_marker[id] );
-      console.log( g_commuter_marker[id]["osm_marker"] );
-
       g_commuter_marker_layer.removeMarker( g_commuter_marker[id]["osm_marker"] );
       delete g_commuter_marker[ id ];
     }

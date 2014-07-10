@@ -4,7 +4,7 @@
 
 ![Real Time Tracking](/misc/bostontraintrackScreenshot.png)
 
-Simple real time tracking of Boston metros using Open Street Map (via OpenLayers) and MBTA's real time metro tracking.
+Simple real time tracking of Boston metros, buses and commuter rails using Open Street Map (via OpenLayers) and MBTA's real time tracking.
 
 See it live at [bostontraintrack.com](http://bostontraintrack.com).
 

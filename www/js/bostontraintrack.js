@@ -988,5 +988,9 @@ $(document).ready( function() {
   b.style.top = '300px';
   b.style.left = '5px';
 
+  var b = document.getElementById('gitlink');
+  b.style.top = '500px';
+  b.style.left = '5px';
+
 });
 

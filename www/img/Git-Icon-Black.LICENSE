@@ -1,0 +1,1 @@
+Git Logo by Jason Long is licensed under the Creative Commons Attribution 3.0 Unported License.

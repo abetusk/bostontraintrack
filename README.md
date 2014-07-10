@@ -1,9 +1,14 @@
-BostonTrainTrack
+[BostonTrainTrack](http://bostontraintrack.com)
 ================
+
+
+![Real Time Tracking](/misc/bostontraintrackScreenshot.png)
 
 Simple real time tracking of Boston metros using Open Street Map (via OpenLayers) and MBTA's real time metro tracking.
 
-See it live at [bostontraintrack.com](http://bostontraintrack.com).
+See it live at:
+
+[bostontraintrack.com](http://bostontraintrack.com).
 
 LICENSE
 -------

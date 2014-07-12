@@ -3,3 +3,4 @@
 *       *       *       *       *       /home/meow/bostontraintrack/srv/monitor_srv.pl 2>> /home/meow/bostontraintrack/srv/log/monitor_srv.err >> /home/meow/bostontraintrack/srv/log/monitor_srv.log
 *       *       *       *       *       /home/meow/bostontraintrack/srv/monitor_srv_bus.pl 2>> /home/meow/bostontraintrack/srv/log/monitor_srv_bus.err >> /home/meow/bostontraintrack/srv/log/monitor_srv_bus.log
 *       *       *       *       *       /home/meow/bostontraintrack/srv/monitor_srv_commuter.pl 2>> /home/meow/bostontraintrack/srv/log/monitor_srv_commuter.err >> /home/meow/bostontraintrack/srv/log/monitor_srv_commuter.log
+*       *       *       *       *       /home/meow/bostontraintrack/srv/monitor_srv_metro.pl 2>> /home/meow/bostontraintrack/srv/log/monitor_srv_metro.err >> /home/meow/bostontraintrack/srv/log/monitor_srv_metro.log

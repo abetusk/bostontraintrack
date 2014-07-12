@@ -26,9 +26,9 @@ var g_stop_layer ;
 var g_verbose=0;
 var g_map;
 
-var g_marker = {};
-var g_marker_popup = {};
-var g_marker_layer ;
+var g_metro_marker = {};
+var g_metro_marker_popup = {};
+var g_metro_marker_layer ;
 
 var g_bus_marker = {};
 var g_bus_marker_layer;
@@ -48,7 +48,7 @@ var g_dirty = 0;
 
 var g_zoom = 14;
 
-var g_socket;
+var g_metro_socket;
 var g_bus_socket;
 var g_commuter_socket;
 
@@ -318,7 +318,7 @@ function drawBusMarker(busid, busType) {
 
   var icon ;
   if (busType == "bus") {
-    iheading = Math.floor( (parseInt( dat.Heading ) + 23) / 45 );
+    var iheading = Math.floor( (parseInt( dat.Heading ) + 23) / 45 );
     if (iheading > 7) { iheading = 0; }
 
     if (dat["Route"] in g_bus_route_hash) {
@@ -341,6 +341,70 @@ function drawBusMarker(busid, busType) {
   g_bus_marker_layer.addMarker( dat["osm_marker"] );
 
 }
+
+function drawMetroMarker(metroid) {
+  var headingLookup = [ "0", "45", "90", "135", "180", "225", "270", "315" ];
+
+  var dat = g_metro_marker[metroid];
+
+  // Remove it
+  //
+  if ( "osm_marker" in dat ) {
+    var m = dat["osm_marker"];
+    g_metro_marker_layer.removeMarker(m);
+    delete g_metro_marker[metroid].osm_marker;
+    delete g_metro_marker[metroid].icon;
+    delete g_metro_marker[metroid].size;
+    delete g_metro_marker[metroid].offset;
+  }
+
+  var lonlat =  new OpenLayers.LonLat( dat.Long, dat.Lat )
+      .transform(
+        new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984
+        g_map.getProjectionObject() // to Spherical Mercator Projection
+      );
+
+  var scale_factor = 1.0;
+  var bus_w = g_param.bus_w;
+  var bus_h = g_param.bus_h;
+
+  if ( g_map.zoom < 8 ) { return; }
+
+  if ( ( g_map.zoom <= 13 ) && ( g_map.zoom >= 8) )
+  {
+    scale_factor = Math.exp( Math.log(2) * (g_map.zoom-14) );
+    bus_w *= scale_factor;
+    bus_h *= scale_factor;
+  }
+
+  var size = new OpenLayers.Size(bus_w,bus_h);
+  var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
+
+
+  var icon ;
+  if (( dat.Heading != "" ) && ( dat.Route != "" )) {
+    var iheading = Math.floor( (parseInt( dat.Heading ) + 23) / 45 );
+    var route = dat.Route;
+    if (iheading > 7) { iheading = 0; }
+    icon = new OpenLayers.Icon("img/metro_" + route + "_" + headingLookup[iheading] + ".png", size, offset);
+    icon.setOpacity(0.75);
+  } else {
+    icon = new OpenLayers.Icon("img/train.png", size, offset);
+  }
+  dat["osm_marker"] = new OpenLayers.Marker( lonlat, icon );
+  dat["osm_marker"].events.register('mousedown',
+                                    dat["osm_marker"],
+                                    (function(xx) { return function() { handlePopup(xx); }; })(metroid) );
+  dat["icon"] = icon;
+  dat["size"] = size;
+  dat["offset"] = offset;
+
+  g_metro_marker_layer.addMarker( dat["osm_marker"] );
+
+}
+
+
+
 
 function drawCommuterMarker(commuterid) {
   var headingLookup = [ "0", "45", "90", "135", "180", "225", "270", "315" ];
@@ -382,7 +446,7 @@ function drawCommuterMarker(commuterid) {
 
   var icon ;
   if ( dat.Heading != "" ) {
-    iheading = Math.floor( (parseInt( dat.Heading ) + 23) / 45 );
+    var iheading = Math.floor( (parseInt( dat.Heading ) + 23) / 45 );
     if (iheading > 7) { iheading = 0; }
     icon = new OpenLayers.Icon("img/commuter_"  + headingLookup[iheading] + ".png", size, offset);
     icon.setOpacity(0.75);
@@ -402,87 +466,6 @@ function drawCommuterMarker(commuterid) {
 }
 
 
-
-
-function drawMarker(tripid, color) {
-  var headingLookup = [ "0", "45", "90", "135", "180", "225", "270", "315" ];
-
-  var dat = g_marker[tripid];
-
-  // Remove it
-  //
-  if ( "osm_marker" in dat ) {
-    var m = dat["osm_marker"];
-    g_marker_layer.removeMarker(m);
-    delete g_marker[tripid].osm_marker;
-    delete g_marker[tripid].icon;
-    delete g_marker[tripid].size;
-    delete g_marker[tripid].offset;
-  }
-
-  var lonlat =  new OpenLayers.LonLat( dat.Long, dat.Lat )
-      .transform(
-        new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984
-        g_map.getProjectionObject() // to Spherical Mercator Projection
-      );
-
-  var scale_factor = 1.0;
-  var bus_w = g_param.bus_w;
-  var bus_h = g_param.bus_h;
-
-  if ( g_map.zoom < 8 ) { return; }
-
-  if ( ( g_map.zoom <= 13 ) && ( g_map.zoom >= 8) )
-  {
-    scale_factor = Math.exp( Math.log(2) * (g_map.zoom-14) );
-    bus_w *= scale_factor;
-    bus_h *= scale_factor;
-  }
-
-
-  //var size = new OpenLayers.Size(36,45);
-  var size = new OpenLayers.Size(bus_w,bus_h);
-  var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
-
-  var icon ;
-  if ( (color == "red") || (color == "blue") || (color == "orange") ) {
-
-    iheading = Math.floor( (parseInt( dat.Heading ) + 23) / 45 );
-    if (iheading > 7) { iheading = 0; }
-    icon = new OpenLayers.Icon("img/metro_" + color + "_" + headingLookup[iheading] + "_fade.png", size, offset);
-  /*
-  } else if (color == "bus") {
-    iheading = Math.floor( (parseInt( dat.Heading ) + 23) / 45 );
-    if (iheading > 7) { iheading = 0; }
-    icon = new OpenLayers.Icon("img/metro_" + color + "_"  + headingLookup[iheading] + "_fade.png", size, offset);
-    */
-  } else {
-    icon = new OpenLayers.Icon("img/underground_" + color + ".png", size, offset);
-  }
-  dat["osm_marker"] = new OpenLayers.Marker( lonlat, icon );
-  dat["osm_marker"].events.register('mousedown',
-                                    dat["osm_marker"],
-                                    (function(xx) { return function() { handlePopup(xx); }; })(tripid) );
-  dat["icon"] = icon;
-  dat["size"] = size;
-  dat["offset"] = offset;
-
-  g_marker_layer.addMarker( dat["osm_marker"] );
-
-}
-
-function updateCommuterMarker( data )
-{
-  var id = data.id;
-  var timestamp = data.timestamp;
-  var route = data.route;
-  var lat = data.lat;
-  var lon = data.lon;
-  var heading = data.heading;
-  var status = data.status;
-
-
-}
 
 function updateBusMarker(data, bus) {
 
@@ -546,90 +529,48 @@ function updateBusMarker(data, bus) {
   g_bus_marker_layer.redraw();
 }
 
-function updateMarker(data, color) {
-  var trips = data[color].TripList.Trips;
-
-  // Mark all entries for deletion
-  //
-  for (var tripid in g_marker) {
-    if (("Color" in g_marker[tripid]) && (g_marker[tripid].Color== color)) {
-      g_marker[tripid].Dirty = 0;
-    }
-  }
-
-  // Create new entries if they don't exist
-  //
-  for (var x in trips) {
-    if ("Position" in trips[x]) {
-      var tripid = trips[x].TripID;
-      if ( !( tripid in g_marker )) {
-        //console.log("allocating");
-        g_marker[ tripid ] = { Lat : 0, Long : 0, Color : color };
-      }
-      //g_marker[ tripid ].Dirty = 0;
-    }
-  }
-
-  // Draw new entries and unmark them for deletion if we're drawing
-  // them.
-  //
-  for (var x in trips) {
-    if ("Position" in trips[x]) {
-
-      var tripid = trips[x].TripID;
-
-      g_marker[ tripid ].Timestamp = trips[x].Position.Timestamp;
-      g_marker[ tripid ].Heading = trips[x].Position.Heading;
-      g_marker[ tripid ].Dirty = 1;
-
-      lat = trips[x].Position.Lat;
-      lon = trips[x].Position.Long;
-
-
-      if ( ( Math.abs(lat - g_marker[tripid].Lat) > 0.001 ) ||
-           ( Math.abs(lon - g_marker[tripid].Long) > 0.001 ) ) {
-
-        g_marker[ tripid ].Lat     = trips[x].Position.Lat;
-        g_marker[ tripid ].Long    = trips[x].Position.Long;
-
-        drawMarker( tripid, color );
-      }
-
-    } else { }
-  }
-
-  // Delete stale entries
-  //
-  for (var tripid in g_marker) {
-    if (("Color" in g_marker[tripid]) && (g_marker[tripid].Color== color)) {
-      if (g_marker[ tripid ].Dirty == 0) {
-        console.log("REMOVING metro", tripid)
-        g_marker_layer.removeMarker( g_marker[tripid]["osm_marker"] );
-        delete g_marker[ tripid ];
-      }
-    }
-  }
-
-  g_marker_layer.redraw();
-}
-
-function rtupdate(data) {
-
-  //if (g_verbose) { console.log("++"); }
-
-  if ("red" in data)    { updateMarker(data, "red"); }
-  if ("blue" in data)   { updateMarker(data, "blue"); }
-  if ("orange" in data) { updateMarker(data, "orange"); }
-
-  // no green :(
-  if ("green" in data) { updateMarker(data, "green"); }
-
-
-}
-
 function rtbusupdate(data) {
   //console.log("rtbusupdate:", data);
   if ("bus" in data) { updateBusMarker(data, "bus"); }
+}
+
+function RTMetroUpdate(data) {
+  if (g_verbose) { console.log("RTMetroUpdate:", data ); }
+
+  var id = data.id;
+  var timestamp = data.timestamp;
+  var route = data.route;
+  var lat = data.lat;
+  var lon = data.lon;
+  var heading = data.heading;
+  var status = data.status;
+
+  if ( status == "delete" )
+  {
+
+    if (g_verbose) { console.log("DELETE Metro", id ); }
+
+    if (id in g_metro_marker) {
+      g_metro_marker_layer.removeMarker( g_metro_marker[id]["osm_marker"] );
+      delete g_metro_marker[ id ];
+    }
+  } else {
+
+    if ( !(id in g_metro_marker) ) {
+      g_metro_marker[ id ] = {};
+    }
+
+    g_metro_marker[ id ].id = id;
+    g_metro_marker[ id ].Timestamp = timestamp;
+    g_metro_marker[ id ].Heading = heading;
+    g_metro_marker[ id ].Route = route;
+    g_metro_marker[ id ].Lat = lat;
+    g_metro_marker[ id ].Long = lon;
+
+    drawMetroMarker( data.id );
+
+  }
+
 }
 
 function RTCommuterUpdate(data) {
@@ -673,14 +614,16 @@ function RTCommuterUpdate(data) {
 
 var g_SERVER_ADDR = "bostontraintrack.com";
 
-// Real Time Metro Stream
+// New metro stream
 //
-function setupRTStreams() {
-  g_socket = io('http://' + g_SERVER_ADDR + ':8181');
-  g_socket.on('connect', function() {
+function setupRTMStreams() {
+  g_metro_socket = io('http://' + g_SERVER_ADDR + ':8184');
+  g_metro_socket.on('connect', function() {
     if (g_verbose) { console.log("connected!"); }
-    g_socket.on('update', rtupdate );
-    g_socket.on('disconnect', function() { console.log("disconnected"); });
+    g_metro_socket.on('update', RTMetroUpdate );
+    g_metro_socket.on('disconnect', function() { console.log("disconnected"); });
+
+    g_metro_socket.emit( "enable" );
   });
 }
 
@@ -714,8 +657,8 @@ function mapEvent(ev) {
     if ( g_map.zoom <= 12 )
     {
 
-      for (var metro_id in g_marker) {
-        drawMarker( metro_id, g_marker[metro_id].Color );
+      for (var metro_id in g_metro_marker) {
+        drawMetroMarker( metro_id );
       }
 
       for (var bus_id in g_bus_marker) {
@@ -732,8 +675,8 @@ function mapEvent(ev) {
     else
     {
 
-      for (var bus_id in g_marker) {
-        drawMarker( bus_id, g_marker[bus_id].Color );
+      for (var metro_id in g_metro_marker) {
+        drawMetroMarker( metro_id );
       }
 
       for (var bus_id in g_bus_marker) {
@@ -846,6 +789,11 @@ function initMap() {
   g_map.addLayer(transport);
 
 
+  g_metro_marker_layer = new OpenLayers.Layer.Markers( "Metro" );
+  g_map.addLayer(g_metro_marker_layer);
+  g_map.setLayerIndex(g_metro_marker_layer, 97);
+
+
   g_bus_marker_layer = new OpenLayers.Layer.Markers( "Bus" );
   g_map.addLayer(g_bus_marker_layer);
   g_map.setLayerIndex(g_bus_marker_layer, 98);
@@ -855,11 +803,6 @@ function initMap() {
   g_map.addLayer(g_commuter_marker_layer);
   g_map.setLayerIndex(g_commuter_marker_layer, 97);
 
-
-
-  g_marker_layer = new OpenLayers.Layer.Markers( "Metro" );
-  g_map.addLayer(g_marker_layer);
-  g_map.setLayerIndex(g_marker_layer, 99);
 
   g_stop_layer = new OpenLayers.Layer.Markers( "Stops" );
 
@@ -972,7 +915,8 @@ function toggleGPS() {
 
 $(document).ready( function() {
   initMap();
-  setupRTStreams();
+  //setupRTStreams();
+  setupRTMStreams();
   setupRTBStreams();
   setupRTCStreams();
 

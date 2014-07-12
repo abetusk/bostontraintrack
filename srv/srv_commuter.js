@@ -138,6 +138,7 @@ function pushData( vehicle_data )
     {
       if (global_status[ cli_id ].enable) 
       {
+        enable_count++;
 
         console.log("  pushing " + cli_id + ">>>" + vehicle_data.id );
 
@@ -303,6 +304,29 @@ function fetchCommuterLine() {
   } catch (err2) {
     console.log("http request error? " + err2);
   }
+
+  var conn_count=0;
+  var enable_count=0;
+  for (var cli_id in global_connect) 
+  {
+    conn_count++;
+
+    try 
+    {
+      if (global_status[ cli_id ].enable) 
+      {
+        enable_count++;
+      }
+    } catch (ee) {
+      console.log("ERROR: pushing to client", cli_id, "(vehicle_id", vehicle_id, ") failed");
+    }
+
+  }
+
+  var dt = Date.now();
+  var dts = dt.toString();
+
+  console.log( dts +  " connected clients:", conn_count, ", (", global_data.n, "), (enabled: ", enable_count, ")" );
 
 }
 

@@ -703,8 +703,7 @@ function setupRTMStreams() {
 // Real Time Bus Stream
 //
 function setupRTBStreams() {
-  //g_bus_socket = io('http://' + g_SERVER_ADDR + ':8182');
-  g_bus_socket = io('http://' + "localhost" + ':8182');
+  g_bus_socket = io('http://' + g_SERVER_ADDR + ':8182');
   g_bus_socket.on('connect', function() {
     if (g_verbose) { console.log("connected!"); }
     //g_bus_socket.on('update', rtbusupdate );

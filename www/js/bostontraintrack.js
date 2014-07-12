@@ -577,9 +577,6 @@ function RTBusUpdate(data) {
 
   if ( status == "delete" )
   {
-    //DEBUG
-    console.log( "DELETE Bus", id );
-
     if (g_verbose) { console.log("DELETE Bus", id ); }
     if (id in g_bus_marker) {
       g_bus_marker_layer.removeMarker( g_bus_marker[id]["osm_marker"] );
@@ -587,10 +584,7 @@ function RTBusUpdate(data) {
     }
   } else {
 
-    //DEBUG
-    console.log( "UPDATE Bus", id );
-
-
+    if (g_verbose) { console.log( "UPDATE Bus", id ); }
     if ( !(id in g_bus_marker) ) {
       g_bus_marker[ id ] = {};
     }

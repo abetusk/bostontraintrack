@@ -1,5 +1,5 @@
-//var socket = require("socket.io-client")("http://localhost:8182");
-var socket = require("socket.io-client")("http://bostontraintrack.com:8182");
+var socket = require("socket.io-client")("http://localhost:8182");
+//var socket = require("socket.io-client")("http://bostontraintrack.com:8182");
 
 function printbusdata(data, ident) {
   var vehicle = data[ident].body.vehicle;
@@ -25,32 +25,14 @@ function printdata(data, color) {
 
 function onupdate(data) {
 
-  console.log(data);
+  //console.log(data);
 
-  if ("red" in data) {
-    console.log(">>>red:");
-    printdata(data, "red");
+  var st = "";
+  for (var ind in data ) {
+    st += " (" + ind + " " + data[ind] + ")";
   }
 
-  if ("blue" in data) {
-    console.log(">>>blue:");
-    printdata(data, "blue");
-  }
-
-  if ("orange" in data) {
-    console.log(">>>orange:");
-    printdata(data, "orange");
-  }
-
-  if ("green" in data) {
-    console.log(">>>green:");
-    printdata(data, "green");
-  }
-
-  if ("bus" in data) {
-    console.log(">>>bus:");
-    printbusdata(data, "bus");
-  }
+  console.log(st);
 
 }
 

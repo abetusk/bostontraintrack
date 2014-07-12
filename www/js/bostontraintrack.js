@@ -278,6 +278,94 @@ function handlePopup(tripid) {
   console.log("handlePopup>>", tripid);
 }
 
+function drawBusMarker(busid) {
+  var headingLookup = [ "0", "45", "90", "135", "180", "225", "270", "315" ];
+
+  var dat = g_bus_marker[busid];
+
+  // Remove it
+  //
+  if ( "osm_marker" in dat ) {
+    var m = dat["osm_marker"];
+    g_bus_marker_layer.removeMarker(m);
+    delete g_bus_marker[busid].osm_marker;
+    delete g_bus_marker[busid].icon;
+    delete g_bus_marker[busid].size;
+    delete g_bus_marker[busid].offset;
+  }
+
+  var lonlat =  new OpenLayers.LonLat( dat.Long, dat.Lat )
+      .transform(
+        new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984
+        g_map.getProjectionObject() // to Spherical Mercator Projection
+      );
+
+  if ( g_map.zoom < 8 ) { return; }
+
+  // Compensate for the extra width added by
+  // extending the width of the icon for the
+  // route number bubble.
+  //
+  var fudge_w = 0;
+  if ( dat.Route in g_bus_route_hash ) {
+    var l  = dat.Route.length;
+    var bub_width = (l*4) + 2 + 2;
+    var bw2 = bub_width/2;
+    var left_overflow = bw2 - 6;
+    if (left_overflow < 0) {
+      left_overflow = 0;
+    }
+    fudge_w = 2*left_overflow;
+    fudge_w = Math.floor( fudge_w / 0.8 );
+  }
+
+  var scale_factor = 1.0;
+  var bus_w = g_param.bus_w + fudge_w;
+  var bus_h = g_param.bus_h;
+
+  if ( ( g_map.zoom <= 13 ) && ( g_map.zoom >= 8) )
+  {
+    scale_factor = Math.exp( Math.log(2) * (g_map.zoom-14) );
+    bus_w *= scale_factor;
+    bus_h *= scale_factor;
+  }
+
+  var size = new OpenLayers.Size(bus_w, bus_h);
+  var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
+
+
+  var bus_opacity = 0.5;
+
+  var icon ;
+  if ( dat.Heading != "" ) {
+    var iheading = Math.floor( (parseInt( dat.Heading ) + 23) / 45 );
+    if (iheading > 7) { iheading = 0; }
+
+    if ( dat.Route in g_bus_route_hash ) {
+      icon = new OpenLayers.Icon("img/bus_route_icon/bus_gw_r" + dat.Route + "_"  + headingLookup[iheading] + ".png", size, offset);
+      icon.setOpacity( bus_opacity );
+    } else {
+      icon = new OpenLayers.Icon("img/bus_gw_"  + headingLookup[iheading] + ".png", size, offset);
+      icon.setOpacity( bus_opacity );
+    }
+  } else {
+    icon = new OpenLayers.Icon("img/bus_gw.png", size, offset);
+    icon.setOpacity( bus_opacity );
+  }
+  dat["osm_marker"] = new OpenLayers.Marker( lonlat, icon );
+  dat["osm_marker"].events.register('mousedown',
+                                    dat["osm_marker"],
+                                    (function(xx) { return function() { handlePopup(xx); }; })(busid) );
+  dat["icon"] = icon;
+  dat["size"] = size;
+  dat["offset"] = offset;
+
+  g_bus_marker_layer.addMarker( dat["osm_marker"] );
+
+}
+
+/*
+
 function drawBusMarker(busid, busType) {
   var headingLookup = [ "0", "45", "90", "135", "180", "225", "270", "315" ];
 
@@ -341,6 +429,7 @@ function drawBusMarker(busid, busType) {
   g_bus_marker_layer.addMarker( dat["osm_marker"] );
 
 }
+*/
 
 function drawMetroMarker(metroid) {
   var headingLookup = [ "0", "45", "90", "135", "180", "225", "270", "315" ];
@@ -386,10 +475,19 @@ function drawMetroMarker(metroid) {
     var iheading = Math.floor( (parseInt( dat.Heading ) + 23) / 45 );
     var route = dat.Route;
     if (iheading > 7) { iheading = 0; }
-    icon = new OpenLayers.Icon("img/metro_" + route + "_" + headingLookup[iheading] + ".png", size, offset);
+
+    if ((dat.Route == "red") || (dat.Route == "orange") || (dat.Route == "blue")) {
+      icon = new OpenLayers.Icon("img/metro_" + route + "_" + headingLookup[iheading] + ".png", size, offset);
+    } else {
+      icon = new OpenLayers.Icon("img/underground_simple.png", size, offset);
+    }
     icon.setOpacity(0.75);
   } else {
-    icon = new OpenLayers.Icon("img/train.png", size, offset);
+    if ((dat.Route == "red") || (dat.Route == "orange") || (dat.Route == "blue")) {
+      icon = new OpenLayers.Icon("img/metro_" + dat.Route + ".png", size, offset);
+    } else {
+      icon = new OpenLayers.Icon("img/underground_simple.png", size, offset);
+    }
   }
   dat["osm_marker"] = new OpenLayers.Marker( lonlat, icon );
   dat["osm_marker"].events.register('mousedown',
@@ -402,7 +500,6 @@ function drawMetroMarker(metroid) {
   g_metro_marker_layer.addMarker( dat["osm_marker"] );
 
 }
-
 
 
 
@@ -467,72 +564,50 @@ function drawCommuterMarker(commuterid) {
 
 
 
-function updateBusMarker(data, bus) {
+function RTBusUpdate(data) {
+  if (g_verbose) { console.log("RTBusUpdate:", data ); }
 
-  //console.log("updating bus");
+  var id = data.id;
+  var timestamp = data.timestamp;
+  var route = data.route;
+  var lat = data.lat;
+  var lon = data.lon;
+  var heading = data.heading;
+  var status = data.status;
 
-  var vehicle = data[bus].body.vehicle;
+  if ( status == "delete" )
+  {
+    //DEBUG
+    console.log( "DELETE Bus", id );
 
-  for ( var v in vehicle ) {
-    var id = vehicle[v].$.id;
-    if ( !(id in g_bus_marker) ) {
-      g_bus_marker[id] = { Lat: 0, Long : 0, Color : "bus", Dirty:0 };
-    }
-    g_bus_marker[id].Dirty = 0;
-  }
-
-  // Draw new entries and unmark them for deletion if we're drawing
-  // them.
-  //
-  for (var v in vehicle) {
-
-    var id = vehicle[v].$.id;
-    var lat = vehicle[v].$.lat;
-    var lon = vehicle[v].$.lon;
-    var head = vehicle[v].$.heading;
-    var secSince = vehicle[v].$.secsSinceReport;
-    var route = vehicle[v].$.routeTag;
-
-    var s = Math.floor(new Date().getTime() / 1000.0) - parseInt(secSince);
-
-    g_bus_marker[id].Timestamp = s;
-    g_bus_marker[id].Heading = head;
-    g_bus_marker[id].Dirty = 1;
-    g_bus_marker[id].Route = route;
-
-    oldlat = g_bus_marker[id].Lat;
-    oldlon = g_bus_marker[id].Long;
-
-    if ( ( Math.abs(oldlat - lat) > 0.001 ) ||
-         ( Math.abs(oldlon - lon) > 0.001 ) ) {
-
-      g_bus_marker[ id ].Lat     = lat;
-      g_bus_marker[ id ].Long    = lon;
-
-      drawBusMarker( id, "bus" );
-    }
-
-
-  }
-
-  // Delete stale entries
-  //
-  for (var v in vehicle ) {
-    var id = vehicle[v].$.id;
-    if (g_bus_marker[id].Dirty == 0) {
-      console.log("REMOVING bus", id )
+    if (g_verbose) { console.log("DELETE Bus", id ); }
+    if (id in g_bus_marker) {
       g_bus_marker_layer.removeMarker( g_bus_marker[id]["osm_marker"] );
       delete g_bus_marker[ id ];
     }
+  } else {
+
+    //DEBUG
+    console.log( "UPDATE Bus", id );
+
+
+    if ( !(id in g_bus_marker) ) {
+      g_bus_marker[ id ] = {};
+    }
+
+    g_bus_marker[ id ].id = id;
+    g_bus_marker[ id ].Timestamp = timestamp;
+    g_bus_marker[ id ].Heading = heading;
+    g_bus_marker[ id ].Route = route;
+    g_bus_marker[ id ].Lat = lat;
+    g_bus_marker[ id ].Long = lon;
+
+    drawBusMarker( data.id );
+
   }
 
-  g_bus_marker_layer.redraw();
 }
 
-function rtbusupdate(data) {
-  //console.log("rtbusupdate:", data);
-  if ("bus" in data) { updateBusMarker(data, "bus"); }
-}
 
 function RTMetroUpdate(data) {
   if (g_verbose) { console.log("RTMetroUpdate:", data ); }
@@ -547,9 +622,7 @@ function RTMetroUpdate(data) {
 
   if ( status == "delete" )
   {
-
     if (g_verbose) { console.log("DELETE Metro", id ); }
-
     if (id in g_metro_marker) {
       g_metro_marker_layer.removeMarker( g_metro_marker[id]["osm_marker"] );
       delete g_metro_marker[ id ];
@@ -630,10 +703,12 @@ function setupRTMStreams() {
 // Real Time Bus Stream
 //
 function setupRTBStreams() {
-  g_bus_socket = io('http://' + g_SERVER_ADDR + ':8182');
+  //g_bus_socket = io('http://' + g_SERVER_ADDR + ':8182');
+  g_bus_socket = io('http://' + "localhost" + ':8182');
   g_bus_socket.on('connect', function() {
     if (g_verbose) { console.log("connected!"); }
-    g_bus_socket.on('update', rtbusupdate );
+    //g_bus_socket.on('update', rtbusupdate );
+    g_bus_socket.on('update', RTBusUpdate );
     g_bus_socket.on('disconnect', function() { console.log("disconnected"); });
   });
 }
@@ -662,7 +737,7 @@ function mapEvent(ev) {
       }
 
       for (var bus_id in g_bus_marker) {
-        drawBusMarker( bus_id, "bus" );
+        drawBusMarker( bus_id );
       }
 
       for (var commuter_id in g_commuter_marker) {
@@ -680,13 +755,12 @@ function mapEvent(ev) {
       }
 
       for (var bus_id in g_bus_marker) {
-        drawBusMarker( bus_id, "bus" );
+        drawBusMarker( bus_id );
       }
 
       for (var commuter_id in g_commuter_marker) {
         drawCommuterMarker( commuter_id );
       }
-
 
       drawStops();
 

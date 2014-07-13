@@ -1,0 +1,61 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<title>Boston Train Track Fedback Form</title>
+	
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	
+	<link rel="stylesheet" type="text/css" href="css/feedback-style.css" />
+    <link href="css/buttons.css" rel="stylesheet" type="text/css" />
+    <link href="css/forms.css" rel="stylesheet" type="text/css" />
+
+    <style>
+      #submit { float: right; }
+    </style>
+
+</head>
+
+<body>
+
+	<div id="page-wrap">
+
+      <a href='http://bostontraintrack.com'>
+		<img src="img/bbt.png" alt="Give us your feedback!" /><br /><br />
+      </a>
+		
+        <br /> <br />
+        <p align='center'>Please let us know what's on your mind!</p>
+		
+			
+		<div id="contact-area">
+			
+			<form class='pure-form' method="post" action="bbtFeedback.py">
+              <fieldset>
+				<label for="Email">Email (optional):</label>
+				<input type="text" name="Email" id="Email" />
+              </fieldset>
+				
+              <fieldset>
+				<label for="Message">Message:</label><br />
+				<textarea name="Message" rows="40" cols="20" id="Message"></textarea>
+              </fieldset>
+
+              <fieldset>
+                <!-- <input type="submit" name="submit" value="Submit" class="submit-button" /> -->
+                <button align='right' id='submit' class="pure-button pure-button-primary" >Send</button>
+              </fieldset>
+
+			</form>
+			
+			<div style="clear: both;"></div>
+			
+			<p>Back to <a href="http://bostontraintrack.com">BostonTrainTrack</a></p>
+		
+		</div>
+	
+	</div>
+
+</body>
+
+</html>

@@ -23,7 +23,18 @@
        z-index: 99999;
      }
 
+     .imgFeedback
+     {
+       opacity: 0.15;
+       position: absolute;
+       z-index: 99999;
+     }
+
    </style>
+
+ <title>jQuery UI Tooltip - Default functionality</title>
+<link rel="stylesheet" href="js/jquery-ui.css">
+<script src="js/jquery-ui.js"></script>
 
   </head>
   <body>
@@ -69,6 +80,18 @@
         style=' height:38px; width:38px; '
         value='submit'
         onclick="window.location.href='https://github.com/abetusk/bostontraintrack';"
+      />
+    </div>
+
+    <div id="feedbacklink" class="imgFeedback">
+      <input
+	title="Give us some feedback!"
+        id='feedbacklink'
+        type='image'
+        src='img/small_lightbulb.png'
+        style=' height:38px; width:38px; '
+        value='submit'
+        onclick="window.location.href='feedback.html';"
       />
     </div>
     <!-- style=' height:38px; width:32px; ' -->

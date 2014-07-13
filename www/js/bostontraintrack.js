@@ -488,6 +488,8 @@ function drawMetroMarker(metroid) {
     } else {
       icon = new OpenLayers.Icon("img/underground_simple.png", size, offset);
     }
+
+    icon.setOpacity(0.75);
   }
   dat["osm_marker"] = new OpenLayers.Marker( lonlat, icon );
   dat["osm_marker"].events.register('mousedown',
@@ -549,6 +551,7 @@ function drawCommuterMarker(commuterid) {
     icon.setOpacity(0.75);
   } else {
     icon = new OpenLayers.Icon("img/train.png", size, offset);
+    icon.setOpacity(0.75);
   }
   dat["osm_marker"] = new OpenLayers.Marker( lonlat, icon );
   dat["osm_marker"].events.register('mousedown',
@@ -999,9 +1002,51 @@ $(document).ready( function() {
   b.style.top = '300px';
   b.style.left = '5px';
 
-  var b = document.getElementById('gitlink');
-  b.style.top = '500px';
-  b.style.left = '5px';
+  var h = $(window).height();
+  var w = $(window).width();
+
+  if (h > 450) {
+    var b = document.getElementById('gitlink');
+    b.style.top = (h-50) + "px";
+    b.style.left = '5px';
+  
+    var b = document.getElementById('feedbacklink');
+    b.style.top = (h-50) + "px";
+    b.style.left = (w-50) + "px";
+  } else {
+    $("#gitlink").hide();
+    $("#feedbacklink").hide();
+  }
+
+  $("#feedbacklink")
+    .mouseenter( function() { $(this).animate({opacity: 1.0}, 150); })
+    .mouseleave( function() { $(this).animate({opacity: 0.15}, 150);  } );
+
+  $( document ).tooltip();
+
+$( "#feedbacklink" ).tooltip({ position: { my: "left+15 center", at: "right center" } });
+
+  $( window ).resize( function() {
+    var h = $(window).height();
+    var w = $(window).width();
+
+    var b = document.getElementById('gitlink');
+    b.style.top = (h-50) + "px";
+    b.style.left = '5px';
+  
+    var b = document.getElementById('feedbacklink');
+    b.style.top = (h-50) + "px";
+    b.style.left = (w-50) + "px";
+
+    if (h > 450) {
+      $("#gitlink").show();
+      $("#feedbacklink").show();
+    } else {
+      $("#gitlink").hide();
+      $("#feedbacklink").hide();
+    }
+
+  });
 
 });
 

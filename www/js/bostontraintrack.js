@@ -1005,44 +1005,60 @@ $(document).ready( function() {
   var h = $(window).height();
   var w = $(window).width();
 
+  var b = document.getElementById('gitlink');
+  //b.style.top = (h-50) + "px";
+  //b.style.left = '5px';
+  b.style.top = "5px";
+  b.style.left = (w-50) + 'px';
+
+
   if (h > 450) {
+    /*
     var b = document.getElementById('gitlink');
     b.style.top = (h-50) + "px";
     b.style.left = '5px';
+    */
+
   
     var b = document.getElementById('feedbacklink');
+    //b.style.top = (h-50) + "px";
+    //b.style.left = (w-50) + "px";
     b.style.top = (h-50) + "px";
-    b.style.left = (w-50) + "px";
+    b.style.left = '5px';
+
   } else {
-    $("#gitlink").hide();
+    //$("#gitlink").hide();
     $("#feedbacklink").hide();
   }
 
   $("#feedbacklink")
     .mouseenter( function() { $(this).animate({opacity: 1.0}, 150); })
-    .mouseleave( function() { $(this).animate({opacity: 0.15}, 150);  } );
+    .mouseleave( function() { $(this).animate({opacity: 0.45}, 150);  } );
 
   $( document ).tooltip();
-
-$( "#feedbacklink" ).tooltip({ position: { my: "left+15 center", at: "right center" } });
+  $( "#feedbacklink" ).tooltip({ position: { my: "left+15 center", at: "right center" } });
 
   $( window ).resize( function() {
     var h = $(window).height();
     var w = $(window).width();
 
     var b = document.getElementById('gitlink');
+    //b.style.top = (h-50) + "px";
+    //b.style.left = '5px';
+    b.style.top = "5px";
+    b.style.left = (w-50) + 'px';
+
+    var b = document.getElementById('feedbacklink');
+    //b.style.top = (h-50) + "px";
+    //b.style.left = (w-50) + "px";
     b.style.top = (h-50) + "px";
     b.style.left = '5px';
-  
-    var b = document.getElementById('feedbacklink');
-    b.style.top = (h-50) + "px";
-    b.style.left = (w-50) + "px";
 
     if (h > 450) {
-      $("#gitlink").show();
+      //$("#gitlink").show();
       $("#feedbacklink").show();
     } else {
-      $("#gitlink").hide();
+      //$("#gitlink").hide();
       $("#feedbacklink").hide();
     }
 

@@ -18,14 +18,21 @@
    <style>
      .imgButtonToggle
      {
-       opacity: 0.55;
+       opacity: 0.85;
+       position: absolute;
+       z-index: 99999;
+     }
+
+     .imgGit
+     {
+       opacity: 0.45;
        position: absolute;
        z-index: 99999;
      }
 
      .imgFeedback
      {
-       opacity: 0.45;
+       opacity: 0.55;
        position: absolute;
        z-index: 99999;
      }
@@ -72,7 +79,7 @@
     </div>
     <!-- style=' height:38px; width:32px; ' -->
 
-    <div id="gitlink" class="imgButtonToggle">
+    <div id="gitlink" class="imgGit">
       <input
         id='gitlink'
         type='image'
@@ -88,7 +95,7 @@
 	title="Give us some feedback!"
         id='feedbacklink'
         type='image'
-        src='img/small_lightbulb.png'
+        src='img/small_lightbulb_w_back.png'
         style=' height:38px; width:38px; '
         value='submit'
         onclick="window.location.href='feedback.html';"

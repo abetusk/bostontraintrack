@@ -1033,7 +1033,7 @@ $(document).ready( function() {
 
   $("#feedbacklink")
     .mouseenter( function() { $(this).animate({opacity: 1.0}, 150); })
-    .mouseleave( function() { $(this).animate({opacity: 0.45}, 150);  } );
+    .mouseleave( function() { $(this).animate({opacity: 0.55}, 150);  } );
 
   $( document ).tooltip();
   $( "#feedbacklink" ).tooltip({ position: { my: "left+15 center", at: "right center" } });

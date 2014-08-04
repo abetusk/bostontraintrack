@@ -13,7 +13,7 @@ LICENSE
 
 All source code is under GPL compatible licenses.
 See the headers of the source for the details of what each is under.
-The main `bostontraintrack.js` client JavaScript and metro, bus and commuter rail JavaScript servers (`srv.js`, `srv_bus.js`, and `srv_commuter.js`) are under AGPL 3.0.
+The main `bostontraintrack.js` client JavaScript and metro, bus and commuter rail JavaScript servers (`srv_metro.js`, `srv_bus.js`, and `srv_commuter.js`) are under AGPL 3.0.
 
 All artwork is under CC-BY-SA 3.0.
 

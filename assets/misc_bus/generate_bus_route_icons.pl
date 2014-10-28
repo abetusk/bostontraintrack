@@ -4,7 +4,7 @@
 use strict;
 
 my @routes = split(/\n/, `cat routes.txt`);
-my @heading = (0, 45, 90, 135, 180, 225, 270, 315);
+my @heading = (0, 45, 90, 135, 180, 225, 270, 315, "stat");
 
 my $lame_count = 0;
 

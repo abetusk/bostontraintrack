@@ -1,4 +1,6 @@
-var socket = require("socket.io-client")("http://localhost:8184");
+var socket = require("socket.io-client")("http://localhost:8181");
+
+//var socket = require("socket.io-client")("http://bostontraintrack.com:8190");
 //var socket = require("socket.io-client")("http://bostontraintrack.com:8183");
 
 function printdata(data, color) {
@@ -33,14 +35,18 @@ socket.on("connect", function() {
   //socket.on("disconnect", function() { console.log("disconnected :("); } );
 
   //console.log("enabling!");
-  socket.emit("enable");
+  socket.emit("enable:subway");
 
 });
 
-socket.on("update", onupdate);
+socket.on("update:subway", onupdate);
 socket.on("disconnect", function() { console.log("disconnected :("); } );
 
 //console.log("enabling!");
 //socket.emit("enable");
 
+//20sec
+//setInterval( function() { process.exit(); }, 20000 );
+//10min
+setInterval( function() { process.exit(); }, 600000 );
 

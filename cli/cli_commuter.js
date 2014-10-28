@@ -1,5 +1,4 @@
-var socket = require("socket.io-client")("http://localhost:8183");
-//var socket = require("socket.io-client")("http://bostontraintrack.com:8183");
+var socket = require("socket.io-client")("http://localhost:8181");
 
 function printbusdata(data, ident) {
   var vehicle = data[ident].body.vehicle;
@@ -40,11 +39,11 @@ socket.on("connect", function() {
   //socket.on("disconnect", function() { console.log("disconnected :("); } );
 
   //console.log("enabling!");
-  socket.emit("enable");
+  socket.emit("enable:commuter");
 
 });
 
-socket.on("update", onupdate);
+socket.on("update:commuter", onupdate);
 socket.on("disconnect", function() { console.log("disconnected :("); } );
 
 //console.log("enabling!");

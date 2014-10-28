@@ -10,10 +10,44 @@
     <meta name="description" content="">
    <link rel="stylesheet" type="text/css" href="css/style.css">
 
+
+
    <script src="js/jquery.js"></script>
+   <script src="js/jquery.cookie.js"></script>
+
    <script src="js/OpenLayers.js"></script>
    <script src="js/socket.io.js"></script>
    <script src="js/bostontraintrack.js"></script>
+
+   <link rel='stylesheet' href='bootstrap/css/bootstrap.min.css'>
+   <link rel='stylesheet' href='bootstrap/css/bootstrap-theme.min.css'>
+   <script src='bootstrap/js/bootstrap.min.js'></script>
+
+
+   <script>
+
+    var active_routes = {};
+    function toggle( id_str ) {
+      console.log(id_str);
+      var ele = document.getElementById( "img_" + id_str );
+
+      if ( id_str in active_routes ) {
+        if (active_routes[id_str] == 0) {
+          ele.style.opacity = "1.0";
+          active_routes[id_str] = 1;
+        } else {
+          ele.style.opacity = "0.3";
+          active_routes[id_str] = 0;
+        }
+      } else {
+        active_routes[id_str] = 0;
+        ele.style.opacity = "0.3";
+      }
+    }
+
+    </script>
+
+
 
    <style>
      .imgButtonToggle
@@ -48,6 +82,27 @@
     <div id="mapdiv"></div>
     <!-- <script src="http://www.openlayers.org/api/OpenLayers.js"></script> -->
 
+    <div id="starIcon" class="imgButtonToggle">
+      <input
+        id='starIconInput'
+        type='image'
+        src='img/star_gw_sq.png'
+        style=' height:47px; width:38px; '
+        value='nothing'
+        onclick='$("#routeModal").modal("toggle"); $("#starIconInput").blur();' /> 
+    </div>
+
+    <div id="subwayToggle" class="imgButtonToggle">
+      <input
+        id='subwayToggleInput'
+        type='image'
+        src='img/metro_gw_sq_inv.png'
+        style=' height:47px; width:38px; '
+        value='nothing'
+        onclick='toggleSubwayFeed();' />
+    </div>
+
+
     <div id="busToggle" class="imgButtonToggle">
       <input
         id='busToggleInput'
@@ -55,7 +110,7 @@
         src='img/bus_gw_sq.png'
         style=' height:47px; width:38px; '
         value='nothing'
-        onclick='toggleBus();' />
+        onclick='toggleBusFeed();' />
     </div>
 
     <div id="commuterToggle" class="imgButtonToggle">
@@ -65,7 +120,7 @@
         src='img/train_sq.png'
         style=' height:47px; width:38px; '
         value='nothing'
-        onclick='toggleCommuter();' />
+        onclick='toggleCommuterFeed();' />
     </div>
 
     <div id="gpsToggle" class="imgButtonToggle">
@@ -103,9 +158,968 @@
     </div>
     <!-- style=' height:38px; width:32px; ' -->
 
+    <!-- Modal -->
+    <div class="modal fade" id="routeModal" tabindex="10000" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg" style='opacity:0.85;'>
+        <div class="modal-content">
+
+          <div class="modal-header" style='text-align:center;' >
+            <button type="button" class="close" data-dismiss="modal">
+              <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+            </button>
+
+            <h4>Display Routes</h4>
+
+          </div>
+
+          <div class="modal-body">
+
+
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+
+    <div  id='red-route' onclick='toggleSubwayGroup("red-route");'  class='col-sm-4' style='text-align:center;' >
+    <img id='img_red-route' src='img/metro_red_sq.png' style=' height:47px; width:38px; '  ></img> <br>
+    Red
+    </div>
+    <div  id='blue-route' onclick='toggleSubwayGroup("blue-route");'  class='col-sm-4' style='text-align:center;' >
+    <img id='img_blue-route' src='img/metro_blue_sq.png' style=' height:47px; width:38px; ' ></img> <br>
+    Blue
+    </div>
+    <div  id='orange-route' onclick='toggleSubwayGroup("orange-route");'  class='col-sm-4' style='text-align:center;' >
+    <img id='img_orange-route' src='img/metro_orange_sq.png' style=' height:47px; width:38px; ' ></img> <br>
+    Orange
+    </div>
+
+  </div>
+
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+
+    <div  id='green-b-route' onclick='toggleSubwayGroup("green-b-route");'  class='col-sm-3' style='text-align:center;' >
+    <img id='img_green-b-route' src='img/metro_green_sq.png' style=' height:47px; width:38px; ' ></img> <br>
+    Green (B)
+    </div>
+
+    <div  id='green-c-route' onclick='toggleSubwayGroup("green-c-route");'  class='col-sm-3' style='text-align:center;' >
+    <img id='img_green-c-route' src='img/metro_green_sq.png' style=' height:47px; width:38px; ' ></img> <br>
+    Green (C)
+    </div>
+
+    <div  id='green-d-route' onclick='toggleSubwayGroup("green-d-route");'  class='col-sm-3' style='text-align:center;' >
+    <img id='img_green-d-route' src='img/metro_green_sq.png' style=' height:47px; width:38px; ' ></img> <br>
+    Green (D)
+    </div>
+
+    <div  id='green-e-route' onclick='toggleSubwayGroup("green-e-route");'  class='col-sm-3' style='text-align:center;' >
+    <img id='img_green-e-route' src='img/metro_green_sq.png' style=' height:47px; width:38px; ' ></img> <br>
+    Green (E)
+    </div>
+
+  </div>
+
+
+
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='CR-Fairmount' onclick='toggleCommuterGroup("CR-Fairmount");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_CR-Fairmount' src='img/commuter_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    Fairmount Line
+    </div>
+    <div  id='CR-Fitchburg' onclick='toggleCommuterGroup("CR-Fitchburg");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_CR-Fitchburg' src='img/commuter_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    Fitchburg / South Acton Line
+    </div>
+    <div  id='CR-Worcester' onclick='toggleCommuterGroup("CR-Worcester");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_CR-Worcester' src='img/commuter_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    Framingham / Worcester Line
+    </div>
+    <div  id='CR-Franklin' onclick='toggleCommuterGroup("CR-Franklin");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_CR-Franklin' src='img/commuter_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    Franklin Line
+    </div>
+    <div  id='CR-Greenbush' onclick='toggleCommuterGroup("CR-Greenbush");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_CR-Greenbush' src='img/commuter_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    Greenbush Line
+    </div>
+    <div  id='CR-Haverhill' onclick='toggleCommuterGroup("CR-Haverhill");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_CR-Haverhill' src='img/commuter_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    Haverhill Line
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='CR-Kingston' onclick='toggleCommuterGroup("CR-Kingston");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_CR-Kingston' src='img/commuter_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    Kingston / Plymouth Line
+    </div>
+    <div  id='CR-Lowell' onclick='toggleCommuterGroup("CR-Lowell");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_CR-Lowell' src='img/commuter_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    Lowell Line
+    </div>
+    <div  id='CR-Middleborough' onclick='toggleCommuterGroup("CR-Middleborough");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_CR-Middleborough' src='img/commuter_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    Middleborough / Lakeville Line
+    </div>
+    <div  id='CR-Needham' onclick='toggleCommuterGroup("CR-Needham");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_CR-Needham' src='img/commuter_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    Needham Line
+    </div>
+    <div  id='CR-Newburyport' onclick='toggleCommuterGroup("CR-Newburyport");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_CR-Newburyport' src='img/commuter_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    Newburyport / Rockport Line
+    </div>
+    <div  id='CR-Providence' onclick='toggleCommuterGroup("CR-Providence");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_CR-Providence' src='img/commuter_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    Providence / Stoughton Line
+    </div>
+  </div>
+
+
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='701' onclick='toggleBusGroup("701");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_701' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    CT1
+    </div>
+    <div  id='747' onclick='toggleBusGroup("747");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_747' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    CT2
+    </div>
+    <div  id='708' onclick='toggleBusGroup("708");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_708' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    CT3
+    </div>
+    <div  id='746' onclick='toggleBusGroup("746");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_746' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    Silver Line Waterfront
+    </div>
+    <div  id='741' onclick='toggleBusGroup("741");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_741' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    SL1
+    </div>
+    <div  id='742' onclick='toggleBusGroup("742");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_742' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    SL2
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='751' onclick='toggleBusGroup("751");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_751' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    SL4
+    </div>
+    <div  id='749' onclick='toggleBusGroup("749");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_749' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    SL5
+    </div>
+    <div  id='01' onclick='toggleBusGroup("01");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_01' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    1
+    </div>
+    <div  id='04' onclick='toggleBusGroup("04");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_04' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    4
+    </div>
+    <div  id='05' onclick='toggleBusGroup("05");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_05' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    5
+    </div>
+    <div  id='07' onclick='toggleBusGroup("07");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_07' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    7
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='08' onclick='toggleBusGroup("08");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_08' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    8
+    </div>
+    <div  id='09' onclick='toggleBusGroup("09");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_09' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    9
+    </div>
+    <div  id='10' onclick='toggleBusGroup("10");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_10' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    10
+    </div>
+    <div  id='11' onclick='toggleBusGroup("11");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_11' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    11
+    </div>
+    <div  id='14' onclick='toggleBusGroup("14");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_14' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    14
+    </div>
+    <div  id='15' onclick='toggleBusGroup("15");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_15' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    15
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='16' onclick='toggleBusGroup("16");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_16' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    16
+    </div>
+    <div  id='17' onclick='toggleBusGroup("17");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_17' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    17
+    </div>
+    <div  id='18' onclick='toggleBusGroup("18");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_18' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    18
+    </div>
+    <div  id='19' onclick='toggleBusGroup("19");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_19' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    19
+    </div>
+    <div  id='21' onclick='toggleBusGroup("21");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_21' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    21
+    </div>
+    <div  id='22' onclick='toggleBusGroup("22");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_22' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    22
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='23' onclick='toggleBusGroup("23");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_23' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    23
+    </div>
+    <div  id='24' onclick='toggleBusGroup("24");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_24' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    24
+    </div>
+    <div  id='2427' onclick='toggleBusGroup("2427");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_2427' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    24 / 27
+    </div>
+    <div  id='26' onclick='toggleBusGroup("26");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_26' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    26
+    </div>
+    <div  id='27' onclick='toggleBusGroup("27");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_27' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    27
+    </div>
+    <div  id='28' onclick='toggleBusGroup("28");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_28' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    28
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='29' onclick='toggleBusGroup("29");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_29' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    29
+    </div>
+    <div  id='30' onclick='toggleBusGroup("30");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_30' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    30
+    </div>
+    <div  id='31' onclick='toggleBusGroup("31");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_31' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    31
+    </div>
+    <div  id='32' onclick='toggleBusGroup("32");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_32' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    32
+    </div>
+    <div  id='3233' onclick='toggleBusGroup("3233");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_3233' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    32 / 33
+    </div>
+    <div  id='33' onclick='toggleBusGroup("33");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_33' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    33
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='34' onclick='toggleBusGroup("34");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_34' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    34
+    </div>
+    <div  id='34E' onclick='toggleBusGroup("34E");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_34E' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    34E
+    </div>
+    <div  id='35' onclick='toggleBusGroup("35");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_35' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    35
+    </div>
+    <div  id='36' onclick='toggleBusGroup("36");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_36' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    36
+    </div>
+    <div  id='37' onclick='toggleBusGroup("37");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_37' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    37
+    </div>
+    <div  id='3738' onclick='toggleBusGroup("3738");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_3738' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    37 / 38
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='38' onclick='toggleBusGroup("38");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_38' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    38
+    </div>
+    <div  id='39' onclick='toggleBusGroup("39");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_39' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    39
+    </div>
+    <div  id='40' onclick='toggleBusGroup("40");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_40' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    40
+    </div>
+    <div  id='4050' onclick='toggleBusGroup("4050");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_4050' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    40 / 50
+    </div>
+    <div  id='41' onclick='toggleBusGroup("41");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_41' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    41
+    </div>
+    <div  id='42' onclick='toggleBusGroup("42");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_42' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    42
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='43' onclick='toggleBusGroup("43");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_43' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    43
+    </div>
+    <div  id='44' onclick='toggleBusGroup("44");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_44' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    44
+    </div>
+    <div  id='45' onclick='toggleBusGroup("45");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_45' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    45
+    </div>
+    <div  id='47' onclick='toggleBusGroup("47");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_47' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    47
+    </div>
+    <div  id='50' onclick='toggleBusGroup("50");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_50' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    50
+    </div>
+    <div  id='51' onclick='toggleBusGroup("51");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_51' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    51
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='52' onclick='toggleBusGroup("52");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_52' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    52
+    </div>
+    <div  id='55' onclick='toggleBusGroup("55");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_55' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    55
+    </div>
+    <div  id='57' onclick='toggleBusGroup("57");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_57' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    57
+    </div>
+    <div  id='57A' onclick='toggleBusGroup("57A");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_57A' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    57A
+    </div>
+    <div  id='59' onclick='toggleBusGroup("59");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_59' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    59
+    </div>
+    <div  id='60' onclick='toggleBusGroup("60");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_60' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    60
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='62' onclick='toggleBusGroup("62");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_62' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    62
+    </div>
+    <div  id='627' onclick='toggleBusGroup("627");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_627' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    62 / 76
+    </div>
+    <div  id='64' onclick='toggleBusGroup("64");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_64' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    64
+    </div>
+    <div  id='65' onclick='toggleBusGroup("65");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_65' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    65
+    </div>
+    <div  id='66' onclick='toggleBusGroup("66");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_66' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    66
+    </div>
+    <div  id='67' onclick='toggleBusGroup("67");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_67' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    67
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='68' onclick='toggleBusGroup("68");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_68' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    68
+    </div>
+    <div  id='69' onclick='toggleBusGroup("69");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_69' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    69
+    </div>
+    <div  id='70' onclick='toggleBusGroup("70");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_70' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    70
+    </div>
+    <div  id='70A' onclick='toggleBusGroup("70A");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_70A' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    70A
+    </div>
+    <div  id='71' onclick='toggleBusGroup("71");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_71' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    71
+    </div>
+    <div  id='72' onclick='toggleBusGroup("72");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_72' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    72
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='725' onclick='toggleBusGroup("725");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_725' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    72 / 75
+    </div>
+    <div  id='73' onclick='toggleBusGroup("73");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_73' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    73
+    </div>
+    <div  id='74' onclick='toggleBusGroup("74");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_74' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    74
+    </div>
+    <div  id='75' onclick='toggleBusGroup("75");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_75' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    75
+    </div>
+    <div  id='76' onclick='toggleBusGroup("76");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_76' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    76
+    </div>
+    <div  id='77' onclick='toggleBusGroup("77");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_77' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    77
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='78' onclick='toggleBusGroup("78");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_78' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    78
+    </div>
+    <div  id='79' onclick='toggleBusGroup("79");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_79' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    79
+    </div>
+    <div  id='80' onclick='toggleBusGroup("80");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_80' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    80
+    </div>
+    <div  id='83' onclick='toggleBusGroup("83");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_83' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    83
+    </div>
+    <div  id='84' onclick='toggleBusGroup("84");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_84' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    84
+    </div>
+    <div  id='85' onclick='toggleBusGroup("85");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_85' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    85
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='86' onclick='toggleBusGroup("86");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_86' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    86
+    </div>
+    <div  id='87' onclick='toggleBusGroup("87");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_87' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    87
+    </div>
+    <div  id='88' onclick='toggleBusGroup("88");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_88' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    88
+    </div>
+    <div  id='89' onclick='toggleBusGroup("89");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_89' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    89
+    </div>
+    <div  id='8993' onclick='toggleBusGroup("8993");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_8993' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    89 / 93
+    </div>
+    <div  id='90' onclick='toggleBusGroup("90");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_90' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    90
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='91' onclick='toggleBusGroup("91");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_91' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    91
+    </div>
+    <div  id='92' onclick='toggleBusGroup("92");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_92' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    92
+    </div>
+    <div  id='93' onclick='toggleBusGroup("93");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_93' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    93
+    </div>
+    <div  id='94' onclick='toggleBusGroup("94");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_94' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    94
+    </div>
+    <div  id='95' onclick='toggleBusGroup("95");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_95' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    95
+    </div>
+    <div  id='96' onclick='toggleBusGroup("96");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_96' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    96
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='97' onclick='toggleBusGroup("97");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_97' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    97
+    </div>
+    <div  id='99' onclick='toggleBusGroup("99");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_99' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    99
+    </div>
+    <div  id='100' onclick='toggleBusGroup("100");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_100' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    100
+    </div>
+    <div  id='101' onclick='toggleBusGroup("101");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_101' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    101
+    </div>
+    <div  id='104' onclick='toggleBusGroup("104");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_104' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    104
+    </div>
+    <div  id='105' onclick='toggleBusGroup("105");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_105' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    105
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='106' onclick='toggleBusGroup("106");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_106' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    106
+    </div>
+    <div  id='108' onclick='toggleBusGroup("108");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_108' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    108
+    </div>
+    <div  id='109' onclick='toggleBusGroup("109");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_109' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    109
+    </div>
+    <div  id='110' onclick='toggleBusGroup("110");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_110' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    110
+    </div>
+    <div  id='111' onclick='toggleBusGroup("111");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_111' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    111
+    </div>
+    <div  id='112' onclick='toggleBusGroup("112");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_112' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    112
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='114' onclick='toggleBusGroup("114");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_114' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    114
+    </div>
+    <div  id='116' onclick='toggleBusGroup("116");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_116' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    116
+    </div>
+    <div  id='116117' onclick='toggleBusGroup("116117");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_116117' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    116 / 117
+    </div>
+    <div  id='117' onclick='toggleBusGroup("117");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_117' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    117
+    </div>
+    <div  id='119' onclick='toggleBusGroup("119");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_119' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    119
+    </div>
+    <div  id='120' onclick='toggleBusGroup("120");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_120' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    120
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='121' onclick='toggleBusGroup("121");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_121' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    121
+    </div>
+    <div  id='131' onclick='toggleBusGroup("131");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_131' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    131
+    </div>
+    <div  id='132' onclick='toggleBusGroup("132");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_132' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    132
+    </div>
+    <div  id='134' onclick='toggleBusGroup("134");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_134' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    134
+    </div>
+    <div  id='136' onclick='toggleBusGroup("136");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_136' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    136
+    </div>
+    <div  id='137' onclick='toggleBusGroup("137");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_137' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    137
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='170' onclick='toggleBusGroup("170");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_170' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    170
+    </div>
+    <div  id='171' onclick='toggleBusGroup("171");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_171' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    171
+    </div>
+    <div  id='201' onclick='toggleBusGroup("201");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_201' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    201
+    </div>
+    <div  id='202' onclick='toggleBusGroup("202");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_202' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    202
+    </div>
+    <div  id='210' onclick='toggleBusGroup("210");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_210' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    210
+    </div>
+    <div  id='211' onclick='toggleBusGroup("211");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_211' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    211
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='212' onclick='toggleBusGroup("212");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_212' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    212
+    </div>
+    <div  id='214' onclick='toggleBusGroup("214");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_214' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    214
+    </div>
+    <div  id='214216' onclick='toggleBusGroup("214216");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_214216' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    214 / 216
+    </div>
+    <div  id='215' onclick='toggleBusGroup("215");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_215' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    215
+    </div>
+    <div  id='216' onclick='toggleBusGroup("216");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_216' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    216
+    </div>
+    <div  id='217' onclick='toggleBusGroup("217");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_217' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    217
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='220' onclick='toggleBusGroup("220");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_220' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    220
+    </div>
+    <div  id='221' onclick='toggleBusGroup("221");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_221' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    221
+    </div>
+    <div  id='222' onclick='toggleBusGroup("222");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_222' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    222
+    </div>
+    <div  id='225' onclick='toggleBusGroup("225");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_225' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    225
+    </div>
+    <div  id='230' onclick='toggleBusGroup("230");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_230' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    230
+    </div>
+    <div  id='236' onclick='toggleBusGroup("236");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_236' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    236
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='238' onclick='toggleBusGroup("238");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_238' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    238
+    </div>
+    <div  id='240' onclick='toggleBusGroup("240");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_240' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    240
+    </div>
+    <div  id='245' onclick='toggleBusGroup("245");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_245' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    245
+    </div>
+    <div  id='274' onclick='toggleBusGroup("274");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_274' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    274
+    </div>
+    <div  id='275' onclick='toggleBusGroup("275");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_275' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    275
+    </div>
+    <div  id='276' onclick='toggleBusGroup("276");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_276' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    276
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='277' onclick='toggleBusGroup("277");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_277' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    277
+    </div>
+    <div  id='325' onclick='toggleBusGroup("325");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_325' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    325
+    </div>
+    <div  id='326' onclick='toggleBusGroup("326");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_326' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    326
+    </div>
+    <div  id='350' onclick='toggleBusGroup("350");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_350' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    350
+    </div>
+    <div  id='351' onclick='toggleBusGroup("351");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_351' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    351
+    </div>
+    <div  id='352' onclick='toggleBusGroup("352");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_352' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    352
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='354' onclick='toggleBusGroup("354");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_354' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    354
+    </div>
+    <div  id='411' onclick='toggleBusGroup("411");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_411' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    411
+    </div>
+    <div  id='424' onclick='toggleBusGroup("424");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_424' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    424
+    </div>
+    <div  id='426' onclick='toggleBusGroup("426");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_426' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    426
+    </div>
+    <div  id='428' onclick='toggleBusGroup("428");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_428' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    428
+    </div>
+    <div  id='429' onclick='toggleBusGroup("429");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_429' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    429
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='430' onclick='toggleBusGroup("430");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_430' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    430
+    </div>
+    <div  id='431' onclick='toggleBusGroup("431");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_431' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    431
+    </div>
+    <div  id='434' onclick='toggleBusGroup("434");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_434' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    434
+    </div>
+    <div  id='435' onclick='toggleBusGroup("435");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_435' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    435
+    </div>
+    <div  id='436' onclick='toggleBusGroup("436");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_436' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    436
+    </div>
+    <div  id='439' onclick='toggleBusGroup("439");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_439' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    439
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='441' onclick='toggleBusGroup("441");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_441' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    441
+    </div>
+    <div  id='441442' onclick='toggleBusGroup("441442");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_441442' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    441 / 442
+    </div>
+    <div  id='442' onclick='toggleBusGroup("442");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_442' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    442
+    </div>
+    <div  id='448' onclick='toggleBusGroup("448");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_448' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    448
+    </div>
+    <div  id='449' onclick='toggleBusGroup("449");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_449' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    449
+    </div>
+    <div  id='450' onclick='toggleBusGroup("450");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_450' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    450
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='451' onclick='toggleBusGroup("451");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_451' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    451
+    </div>
+    <div  id='455' onclick='toggleBusGroup("455");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_455' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    455
+    </div>
+    <div  id='456' onclick='toggleBusGroup("456");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_456' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    456
+    </div>
+    <div  id='459' onclick='toggleBusGroup("459");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_459' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    459
+    </div>
+    <div  id='465' onclick='toggleBusGroup("465");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_465' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    465
+    </div>
+    <div  id='501' onclick='toggleBusGroup("501");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_501' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    501
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='502' onclick='toggleBusGroup("502");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_502' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    502
+    </div>
+    <div  id='503' onclick='toggleBusGroup("503");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_503' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    503
+    </div>
+    <div  id='504' onclick='toggleBusGroup("504");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_504' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    504
+    </div>
+    <div  id='505' onclick='toggleBusGroup("505");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_505' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    505
+    </div>
+    <div  id='553' onclick='toggleBusGroup("553");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_553' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    553
+    </div>
+    <div  id='554' onclick='toggleBusGroup("554");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_554' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    554
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='556' onclick='toggleBusGroup("556");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_556' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    556
+    </div>
+    <div  id='558' onclick='toggleBusGroup("558");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_558' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    558
+    </div>
+    <div  id='608' onclick='toggleBusGroup("608");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_608' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    608
+    </div>
+    <div  id='710' onclick='toggleBusGroup("710");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_710' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    710
+    </div>
+    <div  id='712' onclick='toggleBusGroup("712");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_712' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    712
+    </div>
+    <div  id='713' onclick='toggleBusGroup("713");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_713' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    713
+    </div>
+  </div>
+  <div class='row' style='margin-bottom:50px; margin-top:50px;'>
+    <div  id='714' onclick='toggleBusGroup("714");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_714' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    714
+    </div>
+    <div  id='716' onclick='toggleBusGroup("716");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_716' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    716
+    </div>
+    <div  id='9701' onclick='toggleBusGroup("9701");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_9701' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    9701
+    </div>
+    <div  id='9702' onclick='toggleBusGroup("9702");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_9702' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    9702
+    </div>
+    <div  id='9703' onclick='toggleBusGroup("9703");'  class='col-sm-2' style='text-align:center;' >
+    <img id='img_9703' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
+    9703
+    </div>
+  </div>
+
+
+          </div>
+          <!--
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary">Save changes</button>
+          </div>
+          -->
+
+        </div>
+      </div>
+    </div>
+
+
   </body>
 
 <!-- Piwik -->
+
+<!--
 <script type="text/javascript">
   var _paq = _paq || [];
   _paq.push(['trackPageView']);
@@ -119,6 +1133,7 @@
   })();
 </script>
 <noscript><p><img src="http://bostontraintrack.com/analytics/piwik/piwik.php?idsite=1" style="border:0;" alt="" /></p></noscript>
+-->
+
 <!-- End Piwik Code -->
 
-</html>

@@ -19,23 +19,118 @@
 
 */
 
-// VERSION 0.0.2
+var g_VERSION = "2.0";
 
 var g_stop_layer ;
 
 var g_verbose=0;
 var g_map;
 
-var g_metro_marker = {};
-var g_metro_marker_popup = {};
-var g_metro_marker_layer ;
+// The g_(subway|bus|commuter)_filter_state variable
+// can be (active|default_disable|default_enable).
+// default_disable - don't subscribe to feed, don't display icons
+// default_enable - subscribe to feed, show everything
+// active - subscribe to feed, show only routes in fitler
+//
+//   default_disable ----(filter)----> active
+//    |        ^   ^------(filter)-----/  ^
+//    |        |                          /
+//  (but.)   (but.)                 /-----
+//    |        |                   /
+//    |        |     ----(filter)--
+//    v        |    /
+//    default_enable
+//
+//  Where (but.) is the side button press, (filter) is
+//  toggling of a filter element 
+//  active->default_disable if all toggle elements disabled
+//  default_disable->active if any toggle element enabled
+//  default_enable->active if any toggle element toggled
+//
 
+var g_subway_filter = {
+  "state":"active",
+  "group" : { "red-route":1, "blue-route":1, "orange-route":1,
+              "green-b-route":1,"green-c-route":1,"green-d-route":1,"green-e-route":1 },
+   "route_group_map" : {
+    "red-route" : { "931_":1, "933_":1 },
+    "orange-route" : { "903_":1, "913_":1 },
+    "blue-route" : { "946_":1, "948_":1 },
+    "green-b-route":  { "810_":1, "813_":1, "823_":1 },
+    "green-c-route": { "830_":1, "831_":1 },
+    "green-d-route" : { "840_":1, "842_":1, "851_":1, "852_":1 },
+    "green-e-route" : { "880_":1, "882_":1 }
+  },
+
+  "route":{
+    //green
+    // b        b         b
+    //
+    "810_":1, "813_":1, "823_":1,
+   
+    //green
+    //  c         c
+    "830_":1, "831_":1,
+
+    //green
+    //  d          d      d         d
+    "840_":1, "842_":1, "851_":1, "852_":1,
+   
+    //green
+    // e        e
+    "880_":1, "882_":1,
+
+    //orange
+    //
+    "946_":1, "948_":1,
+
+    //blue
+    //
+    "903_":1, "913_":1,
+
+    //red
+    //
+    "931_":1, "933_":1,
+
+    //trolly
+    //
+    "899_":1
+ }
+};
+
+
+var g_subway_marker = {};
+var g_subway_marker_popup = {};
+var g_subway_marker_layer ;
+
+var g_bus_filter= {
+  "state":"default_disable",
+  "group":{ "01":0, "1":0, "02":0, "2":0, "03":0, "3":0, "04":0, "4":0, "05":0, "5":0,
+            "06":0, "6":0, "07":0, "7":0, "08":0, "8":0, "09":0, "9":0
+  },
+  "route_group_map":{
+    "1" : { "01":0, "1":0 }, "01" : {"01":0, "1":0 },
+    "2" : { "02":0, "2":0 }, "02" : {"02":0, "2":0 },
+    "3" : { "03":0, "3":0 }, "03" : {"03":0, "3":0 },
+    "4" : { "04":0, "4":0 }, "04" : {"04":0, "4":0 },
+    "5" : { "05":0, "5":0 }, "05" : {"05":0, "5":0 },
+    "6" : { "06":0, "6":0 }, "06" : {"06":0, "6":0 },
+    "7" : { "07":0, "7":0 }, "07" : {"07":0, "7":0 },
+    "8" : { "08":0, "8":0 }, "08" : {"08":0, "8":0 },
+    "9" : { "09":0, "9":0 }, "09" : {"09":0, "9":0 }
+  },
+  "route":{ "01":0, "1":0, "02":0, "2":0, "03":0, "3":0, "04":0, "4":0, "05":0, "5":0,
+            "06":0, "6":0, "07":0, "7":0, "08":0, "8":0, "09":0, "9":0
+  }
+};
 var g_bus_marker = {};
 var g_bus_marker_layer;
 
+var g_commuter_filter= { "state":"default_disable", "route":{}, "group":{}, "route_group_map":{} };
 var g_commuter_marker = {};
 var g_commuter_marker_layer;
 
+var g_subway_toggle_input = 1;
 var g_bus_toggle_input = 0;
 var g_gps_toggle_input = 0;
 var g_commuter_toggle_input = 0;
@@ -48,7 +143,7 @@ var g_dirty = 0;
 
 var g_zoom = 14;
 
-var g_metro_socket;
+var g_subway_socket;
 var g_bus_socket;
 var g_commuter_socket;
 
@@ -64,76 +159,76 @@ var g_param = {
 var g_stops =  {
 
 //Boston College (Green)
-//  "place-lake" : { "id" : "place-lake", "name" : "Boston College Station", "lat" : "42.340081", "lon" : "-71.166769", "code" : "rob" } ,
-//  "place-alsgr" : { "id" : "place-alsgr", "name" : "Allston St. Station", "lat" : "42.348701", "lon" : "-71.137955", "code" : "rob" } ,
-//  "place-babck" : { "id" : "place-babck", "name" : "Babcock St. Station", "lat" : "42.35182", "lon" : "-71.12165", "code" : "rob" } ,
-//  "place-brico" : { "id" : "place-brico", "name" : "Packards Corner Station", "lat" : "42.351967", "lon" : "-71.125031", "code" : "rob" } ,
-//  "place-wrnst" : { "id" : "place-wrnst", "name" : "Warren St. Station", "lat" : "42.348343", "lon" : "-71.140457", "code" : "rob" } ,
-//  "place-bucen" : { "id" : "place-bucen", "name" : "Boston Univ. Central Station", "lat" : "42.350082", "lon" : "-71.106865", "code" : "rob" } ,
-//  "place-buest" : { "id" : "place-buest", "name" : "Boston Univ. East Station", "lat" : "42.349735", "lon" : "-71.103889", "code" : "rob" } ,
-//  "place-buwst" : { "id" : "place-buwst", "name" : "Boston Univ. West Station", "lat" : "42.350941", "lon" : "-71.113876", "code" : "rob" } ,
-//  "place-chill" : { "id" : "place-chill", "name" : "Chestnut Hill Ave. Station", "lat" : "42.338169", "lon" : "-71.15316", "code" : "rob" } ,
-//  "place-chswk" : { "id" : "place-chswk", "name" : "Chiswick Rd. Station", "lat" : "42.340805", "lon" : "-71.150711", "code" : "rob" } ,
-//  "place-grigg" : { "id" : "place-grigg", "name" : "Griggs St. Station", "lat" : "42.348545", "lon" : "-71.134949", "code" : "rob" } ,
-//  "place-harvd" : { "id" : "place-harvd", "name" : "Harvard Ave. Station", "lat" : "42.350243", "lon" : "-71.131355", "code" : "r" } ,
-//  "place-wascm" : { "id" : "place-wascm", "name" : "Washington St. Station", "lat" : "42.343864", "lon" : "-71.142853", "code" : "rob" } ,
-//  "place-sthld" : { "id" : "place-sthld", "name" : "Sutherland Rd. Station", "lat" : "42.341614", "lon" : "-71.146202", "code" : "rob" } ,
-//  "place-stplb" : { "id" : "place-stplb", "name" : "Saint Paul St. Station", "lat" : "42.3512", "lon" : "-71.116104", "code" : "rob" } ,
-//  "place-plsgr" : { "id" : "place-plsgr", "name" : "Pleasant St. Station", "lat" : "42.351521", "lon" : "-71.118889", "code" : "rob" } ,
-//  "place-sougr" : { "id" : "place-sougr", "name" : "South St. Station", "lat" : "42.3396", "lon" : "-71.157661", "code" : "rob" } ,
+  "place-lake" : { "id" : "place-lake", "name" : "Boston College Station", "lat" : "42.340081", "lon" : "-71.166769", "code" : "g" } ,
+  "place-alsgr" : { "id" : "place-alsgr", "name" : "Allston St. Station", "lat" : "42.348701", "lon" : "-71.137955", "code" : "g" } ,
+  "place-babck" : { "id" : "place-babck", "name" : "Babcock St. Station", "lat" : "42.35182", "lon" : "-71.12165", "code" : "g" } ,
+  "place-brico" : { "id" : "place-brico", "name" : "Packards Corner Station", "lat" : "42.351967", "lon" : "-71.125031", "code" : "g" } ,
+  "place-wrnst" : { "id" : "place-wrnst", "name" : "Warren St. Station", "lat" : "42.348343", "lon" : "-71.140457", "code" : "g" } ,
+  "place-bucen" : { "id" : "place-bucen", "name" : "Boston Univ. Central Station", "lat" : "42.350082", "lon" : "-71.106865", "code" : "g" } ,
+  "place-buest" : { "id" : "place-buest", "name" : "Boston Univ. East Station", "lat" : "42.349735", "lon" : "-71.103889", "code" : "g" } ,
+  "place-buwst" : { "id" : "place-buwst", "name" : "Boston Univ. West Station", "lat" : "42.350941", "lon" : "-71.113876", "code" : "g" } ,
+  "place-chill" : { "id" : "place-chill", "name" : "Chestnut Hill Ave. Station", "lat" : "42.338169", "lon" : "-71.15316", "code" : "g" } ,
+  "place-chswk" : { "id" : "place-chswk", "name" : "Chiswick Rd. Station", "lat" : "42.340805", "lon" : "-71.150711", "code" : "g" } ,
+  "place-grigg" : { "id" : "place-grigg", "name" : "Griggs St. Station", "lat" : "42.348545", "lon" : "-71.134949", "code" : "g" } ,
+  "place-harvd" : { "id" : "place-harvd", "name" : "Harvard Ave. Station", "lat" : "42.350243", "lon" : "-71.131355", "code" : "g" } ,
+  "place-wascm" : { "id" : "place-wascm", "name" : "Washington St. Station", "lat" : "42.343864", "lon" : "-71.142853", "code" : "g" } ,
+  "place-sthld" : { "id" : "place-sthld", "name" : "Sutherland Rd. Station", "lat" : "42.341614", "lon" : "-71.146202", "code" : "g" } ,
+  "place-stplb" : { "id" : "place-stplb", "name" : "Saint Paul St. Station", "lat" : "42.3512", "lon" : "-71.116104", "code" : "g" } ,
+  "place-plsgr" : { "id" : "place-plsgr", "name" : "Pleasant St. Station", "lat" : "42.351521", "lon" : "-71.118889", "code" : "g" } ,
+  "place-sougr" : { "id" : "place-sougr", "name" : "South St. Station", "lat" : "42.3396", "lon" : "-71.157661", "code" : "g" } ,
 
 //Cleveland Circle (Green)
-//  "place-clmnl" : { "id" : "place-clmnl", "name" : "Cleveland Circle Station", "lat" : "42.336142", "lon" : "-71.149326", "code" : "rob" } ,
-//  "place-engav" : { "id" : "place-engav", "name" : "Englewood Ave. Station", "lat" : "42.336971", "lon" : "-71.14566", "code" : "rob" } ,
-//  "place-denrd" : { "id" : "place-denrd", "name" : "Dean Rd. Station", "lat" : "42.337807", "lon" : "-71.141853", "code" : "rob" } ,
-//  "place-tapst" : { "id" : "place-tapst", "name" : "Tappan St. Station", "lat" : "42.338459", "lon" : "-71.138702", "code" : "rob" } ,
-//  "place-bcnwa" : { "id" : "place-bcnwa", "name" : "Washington Sq. Station", "lat" : "42.339394", "lon" : "-71.13533", "code" : "rob" } ,
-//  "place-fbkst" : { "id" : "place-fbkst", "name" : "Fairbanks St. Station", "lat" : "42.339725", "lon" : "-71.131073", "code" : "rob" } ,
-//  "place-bndhl" : { "id" : "place-bndhl", "name" : "Brandon Hall Station", "lat" : "42.340023", "lon" : "-71.129082", "code" : "rob" } ,
-//  "place-sumav" : { "id" : "place-sumav", "name" : "Summit Ave. Station", "lat" : "42.34111", "lon" : "-71.12561", "code" : "rob" } ,
-//  "place-cool" : { "id" : "place-cool", "name" : "Coolidge Corner Station", "lat" : "42.342213", "lon" : "-71.121201", "code" : "rob" } ,
-//  "place-stpul" : { "id" : "place-stpul", "name" : "Saint Paul St. Station", "lat" : "42.343327", "lon" : "-71.116997", "code" : "rob" } ,
-//  "place-kntst" : { "id" : "place-kntst", "name" : "Kent St. Station", "lat" : "42.344074", "lon" : "-71.114197", "code" : "rob" } ,
-//  "place-hwsst" : { "id" : "place-hwsst", "name" : "Hawes St. Station", "lat" : "42.344906", "lon" : "-71.111145", "code" : "rob" } ,
-//  "place-smary" : { "id" : "place-smary", "name" : "Saint Mary St. Station", "lat" : "42.345974", "lon" : "-71.107353", "code" : "rob" } ,
+  "place-clmnl" : { "id" : "place-clmnl", "name" : "Cleveland Circle Station", "lat" : "42.336142", "lon" : "-71.149326", "code" : "g" } ,
+  "place-engav" : { "id" : "place-engav", "name" : "Englewood Ave. Station", "lat" : "42.336971", "lon" : "-71.14566", "code" : "g" } ,
+  "place-denrd" : { "id" : "place-denrd", "name" : "Dean Rd. Station", "lat" : "42.337807", "lon" : "-71.141853", "code" : "g" } ,
+  "place-tapst" : { "id" : "place-tapst", "name" : "Tappan St. Station", "lat" : "42.338459", "lon" : "-71.138702", "code" : "g" } ,
+  "place-bcnwa" : { "id" : "place-bcnwa", "name" : "Washington Sq. Station", "lat" : "42.339394", "lon" : "-71.13533", "code" : "g" } ,
+  "place-fbkst" : { "id" : "place-fbkst", "name" : "Fairbanks St. Station", "lat" : "42.339725", "lon" : "-71.131073", "code" : "g" } ,
+  "place-bndhl" : { "id" : "place-bndhl", "name" : "Brandon Hall Station", "lat" : "42.340023", "lon" : "-71.129082", "code" : "g" } ,
+  "place-sumav" : { "id" : "place-sumav", "name" : "Summit Ave. Station", "lat" : "42.34111", "lon" : "-71.12561", "code" : "g" } ,
+  "place-cool" : { "id" : "place-cool", "name" : "Coolidge Corner Station", "lat" : "42.342213", "lon" : "-71.121201", "code" : "g" } ,
+  "place-stpul" : { "id" : "place-stpul", "name" : "Saint Paul St. Station", "lat" : "42.343327", "lon" : "-71.116997", "code" : "g" } ,
+  "place-kntst" : { "id" : "place-kntst", "name" : "Kent St. Station", "lat" : "42.344074", "lon" : "-71.114197", "code" : "g" } ,
+  "place-hwsst" : { "id" : "place-hwsst", "name" : "Hawes St. Station", "lat" : "42.344906", "lon" : "-71.111145", "code" : "g" } ,
+  "place-smary" : { "id" : "place-smary", "name" : "Saint Mary St. Station", "lat" : "42.345974", "lon" : "-71.107353", "code" : "g" } ,
 
 //Riverside  (Green)
-//  "place-river" : { "id" : "place-river", "name" : "Riverside Station", "lat" : "42.337059", "lon" : "-71.251742", "code" : "rob" } ,
-//  "place-woodl" : { "id" : "place-woodl", "name" : "Woodland Station", "lat" : "42.333374", "lon" : "-71.244301", "code" : "rob" } ,
-//  "place-waban" : { "id" : "place-waban", "name" : "Waban Station", "lat" : "42.325943", "lon" : "-71.230728", "code" : "rob" } ,
-//  "place-eliot" : { "id" : "place-eliot", "name" : "Eliot Station", "lat" : "42.319023", "lon" : "-71.216713", "code" : "rob" } ,
-//  "place-newtn" : { "id" : "place-newtn", "name" : "Newton Highlands Station", "lat" : "42.321735", "lon" : "-71.206116", "code" : "rob" } ,
-//  "place-chhil" : { "id" : "place-chhil", "name" : "Chestnut Hill Station", "lat" : "42.326653", "lon" : "-71.165314", "code" : "rob" } ,
-//  "place-rsmnl" : { "id" : "place-rsmnl", "name" : "Reservoir Station", "lat" : "42.335027", "lon" : "-71.148952", "code" : "rob" } ,
-//  "place-bcnfd" : { "id" : "place-bcnfd", "name" : "Beaconsfield Station", "lat" : "42.335846", "lon" : "-71.140823", "code" : "rob" } ,
-//  "place-bvmnl" : { "id" : "place-bvmnl", "name" : "Brookline Village Station", "lat" : "42.332774", "lon" : "-71.116296", "code" : "rob" } ,
-//  "place-brkhl" : { "id" : "place-brkhl", "name" : "Brookline Hills Station", "lat" : "42.331333", "lon" : "-71.126999", "code" : "rob" } ,
-//  "place-longw" : { "id" : "place-longw", "name" : "Longwood Station", "lat" : "42.341145", "lon" : "-71.110451", "code" : "rob" } ,
-//  "place-fenwy" : { "id" : "place-fenwy", "name" : "Fenway Station", "lat" : "42.345394", "lon" : "-71.104187", "code" : "rob" } ,
-//  "place-kencl" : { "id" : "place-kencl", "name" : "Kenmore Station", "lat" : "42.348949", "lon" : "-71.095169", "code" : "rob" } ,
-//  "place-newto" : { "id" : "place-newto", "name" : "Newton Centre Station", "lat" : "42.329391", "lon" : "-71.192429", "code" : "rob" } ,
+  "place-river" : { "id" : "place-river", "name" : "Riverside Station", "lat" : "42.337059", "lon" : "-71.251742", "code" : "g" } ,
+  "place-woodl" : { "id" : "place-woodl", "name" : "Woodland Station", "lat" : "42.333374", "lon" : "-71.244301", "code" : "g" } ,
+  "place-waban" : { "id" : "place-waban", "name" : "Waban Station", "lat" : "42.325943", "lon" : "-71.230728", "code" : "g" } ,
+  "place-eliot" : { "id" : "place-eliot", "name" : "Eliot Station", "lat" : "42.319023", "lon" : "-71.216713", "code" : "g" } ,
+  "place-newtn" : { "id" : "place-newtn", "name" : "Newton Highlands Station", "lat" : "42.321735", "lon" : "-71.206116", "code" : "g" } ,
+  "place-chhil" : { "id" : "place-chhil", "name" : "Chestnut Hill Station", "lat" : "42.326653", "lon" : "-71.165314", "code" : "g" } ,
+  "place-rsmnl" : { "id" : "place-rsmnl", "name" : "Reservoir Station", "lat" : "42.335027", "lon" : "-71.148952", "code" : "g" } ,
+  "place-bcnfd" : { "id" : "place-bcnfd", "name" : "Beaconsfield Station", "lat" : "42.335846", "lon" : "-71.140823", "code" : "g" } ,
+  "place-bvmnl" : { "id" : "place-bvmnl", "name" : "Brookline Village Station", "lat" : "42.332774", "lon" : "-71.116296", "code" : "g" } ,
+  "place-brkhl" : { "id" : "place-brkhl", "name" : "Brookline Hills Station", "lat" : "42.331333", "lon" : "-71.126999", "code" : "g" } ,
+  "place-longw" : { "id" : "place-longw", "name" : "Longwood Station", "lat" : "42.341145", "lon" : "-71.110451", "code" : "g" } ,
+  "place-fenwy" : { "id" : "place-fenwy", "name" : "Fenway Station", "lat" : "42.345394", "lon" : "-71.104187", "code" : "g" } ,
+  "place-kencl" : { "id" : "place-kencl", "name" : "Kenmore Station", "lat" : "42.348949", "lon" : "-71.095169", "code" : "g" } ,
+  "place-newto" : { "id" : "place-newto", "name" : "Newton Centre Station", "lat" : "42.329391", "lon" : "-71.192429", "code" : "g" } ,
 
 //Heath (Green)
-//  "place-bckhl" : { "id" : "place-bckhl", "name" : "Back of the Hill Station", "lat" : "42.330139", "lon" : "-71.111313", "code" : "rob" } ,
-//  "place-rvrwy" : { "id" : "place-rvrwy", "name" : "Riverway Station", "lat" : "42.331684", "lon" : "-71.111931", "code" : "rob" } ,
-//  "place-mispk" : { "id" : "place-mispk", "name" : "Mission Park Station", "lat" : "42.333195", "lon" : "-71.109756", "code" : "rob" } ,
-//  "place-fenwd" : { "id" : "place-fenwd", "name" : "Fenwood Rd. Station", "lat" : "42.333706", "lon" : "-71.105728", "code" : "rob" } ,
-//  "place-brmnl" : { "id" : "place-brmnl", "name" : "Brigham Circle Station", "lat" : "42.334229", "lon" : "-71.104609", "code" : "rob" } ,
-//  "place-lngmd" : { "id" : "place-lngmd", "name" : "Longwood Medical Area Station", "lat" : "42.33596", "lon" : "-71.100052", "code" : "rob" } ,
-//  "place-mfa" : { "id" : "place-mfa", "name" : "Museum of Fine Arts Station", "lat" : "42.337711", "lon" : "-71.095512", "code" : "rob" } ,
-//  "place-nuniv" : { "id" : "place-nuniv", "name" : "Northeastern University Station", "lat" : "42.340401", "lon" : "-71.088806", "code" : "rob" } ,
-//  "place-symcl" : { "id" : "place-symcl", "name" : "Symphony Station", "lat" : "42.342687", "lon" : "-71.085056", "code" : "rob" } ,
-//  "place-prmnl" : { "id" : "place-prmnl", "name" : "Prudential Station", "lat" : "42.34557", "lon" : "-71.081696", "code" : "rob" } ,
+  "place-bckhl" : { "id" : "place-bckhl", "name" : "Back of the Hill Station", "lat" : "42.330139", "lon" : "-71.111313", "code" : "g" } ,
+  "place-rvrwy" : { "id" : "place-rvrwy", "name" : "Riverway Station", "lat" : "42.331684", "lon" : "-71.111931", "code" : "g" } ,
+  "place-mispk" : { "id" : "place-mispk", "name" : "Mission Park Station", "lat" : "42.333195", "lon" : "-71.109756", "code" : "g" } ,
+  "place-fenwd" : { "id" : "place-fenwd", "name" : "Fenwood Rd. Station", "lat" : "42.333706", "lon" : "-71.105728", "code" : "g" } ,
+  "place-brmnl" : { "id" : "place-brmnl", "name" : "Brigham Circle Station", "lat" : "42.334229", "lon" : "-71.104609", "code" : "g" } ,
+  "place-lngmd" : { "id" : "place-lngmd", "name" : "Longwood Medical Area Station", "lat" : "42.33596", "lon" : "-71.100052", "code" : "g" } ,
+  "place-mfa" : { "id" : "place-mfa", "name" : "Museum of Fine Arts Station", "lat" : "42.337711", "lon" : "-71.095512", "code" : "g" } ,
+  "place-nuniv" : { "id" : "place-nuniv", "name" : "Northeastern University Station", "lat" : "42.340401", "lon" : "-71.088806", "code" : "g" } ,
+  "place-symcl" : { "id" : "place-symcl", "name" : "Symphony Station", "lat" : "42.342687", "lon" : "-71.085056", "code" : "g" } ,
+  "place-prmnl" : { "id" : "place-prmnl", "name" : "Prudential Station", "lat" : "42.34557", "lon" : "-71.081696", "code" : "g" } ,
 
 //(Green)
-//  "place-bland" : { "id" : "place-bland", "name" : "Blandford St. Station", "lat" : "42.349293", "lon" : "-71.100258", "code" : "rob" } ,
-//  "place-hymnl" : { "id" : "place-hymnl", "name" : "Hynes Convention Center Station", "lat" : "42.347888", "lon" : "-71.087903", "code" : "rob" } ,
-//  "place-coecl" : { "id" : "place-coecl", "name" : "Copley Station", "lat" : "42.349974", "lon" : "-71.077447", "code" : "rob" } ,
-//  "place-armnl" : { "id" : "place-armnl", "name" : "Arlington Station", "lat" : "42.351902", "lon" : "-71.070893", "code" : "rob" } ,
-//  "place-boyls" : { "id" : "place-boyls", "name" : "Boylston Station", "lat" : "42.35302", "lon" : "-71.06459", "code" : "rob" } ,
-//  "place-lech" : { "id" : "place-lech", "name" : "Lechmere Station", "lat" : "42.370772", "lon" : "-71.076536", "code" : "rob" } ,
-//  "place-spmnl" : { "id" : "place-spmnl", "name" : "Science Park Station", "lat" : "42.366664", "lon" : "-71.067666", "code" : "rob" } ,
-//  "place-hsmnl" : { "id" : "place-hsmnl", "name" : "Heath St. Station", "lat" : "42.328681", "lon" : "-71.110559", "code" : "rob" } ,
+  "place-bland" : { "id" : "place-bland", "name" : "Blandford St. Station", "lat" : "42.349293", "lon" : "-71.100258", "code" : "g" } ,
+  "place-hymnl" : { "id" : "place-hymnl", "name" : "Hynes Convention Center Station", "lat" : "42.347888", "lon" : "-71.087903", "code" : "g" } ,
+  "place-coecl" : { "id" : "place-coecl", "name" : "Copley Station", "lat" : "42.349974", "lon" : "-71.077447", "code" : "g" } ,
+  "place-armnl" : { "id" : "place-armnl", "name" : "Arlington Station", "lat" : "42.351902", "lon" : "-71.070893", "code" : "g" } ,
+  "place-boyls" : { "id" : "place-boyls", "name" : "Boylston Station", "lat" : "42.35302", "lon" : "-71.06459", "code" : "g" } ,
+  "place-lech" : { "id" : "place-lech", "name" : "Lechmere Station", "lat" : "42.370772", "lon" : "-71.076536", "code" : "g" } ,
+  "place-spmnl" : { "id" : "place-spmnl", "name" : "Science Park Station", "lat" : "42.366664", "lon" : "-71.067666", "code" : "g" } ,
+  "place-hsmnl" : { "id" : "place-hsmnl", "name" : "Heath St. Station", "lat" : "42.328681", "lon" : "-71.110559", "code" : "g" } ,
 
 //(Red)
   "place-alfcl" : { "id" : "place-alfcl", "name" : "Alewife Station", "lat" : "42.395428", "lon" : "-71.142483", "code" : "r" } ,
@@ -208,45 +303,6 @@ var g_stops =  {
   "place-wtcst" : { "id" : "place-wtcst", "name" : "World Trade Center Station", "lat" : "42.34863", "lon" : "-71.04246", "code" : "b" }
 };
 
-var g_bus_route_hash = {
-  "1" : 1, "7" : 1, "8" : 1, "9" : 1,
-  "10" : 1, "11" : 1, "15" : 1, "16" : 1, "17" : 1,
-  "21" : 1, "22" : 1, "23" : 1, "26" : 1, "28" : 1, "29" : 1,
-  "30" : 1, "31" : 1, "32" : 1, "33" : 1, "34" : 1, "34E" : 1, "35" : 1, "36" : 1, "37" : 1, "38" : 1, "39" : 1,
-  "40" : 1, "41" : 1, "42" : 1, "43" : 1, "44" : 1, "45" : 1, "47" : 1,
-  "51" : 1, "55" : 1, "57" : 1, "59" : 1,
-  "60" : 1, "64" : 1, "66" : 1, "69" : 1,
-  "70" : 1, "70A" : 1, "71" : 1, "73" : 1, "77" : 1, "78" : 1,
-  "80" : 1, "83" : 1, "86" : 1, "87" : 1, "88" : 1, "89" : 1,
-  "90" : 1, "91" : 1, "92" : 1, "93" : 1, "94" : 1, "95" : 1, "96" : 1, "97" : 1, "99" : 1,
-  "100" : 1, "101" : 1, "104" : 1, "105" : 1, "106" : 1, "108" : 1, "109" : 1,
-  "110" : 1, "111" : 1, "112" : 1, "116" : 1, "117" : 1, "119" : 1,
-  "120" : 1,
-  "132" : 1, "134" : 1, "136" : 1, "137" : 1,
-  "171" : 1,
-  "201" : 1, "202" : 1,
-  "210" : 1, "211" : 1, "215" : 1, "216" : 1,
-  "220" : 1, "222" : 1, "225" : 1,
-  "230" : 1, "236" : 1, "238" : 1,
-  "240" : 1,
-  "274" : 1, "275" : 1, "276" : 1, "277" : 1,
-  "350" : 1,
-  "426" : 1, "429" : 1,
-  "430" : 1, "431" : 1,
-  "435" : 1,
-  "441" : 1, "442" : 1,
-  "450" : 1, "455" : 1,
-  "504" : 1,
-  "608" : 1,
-  "627" : 1,
-  "725" : 1,
-  "741" : 1, "742" : 1, "746" : 1, "749" : 1,
-  "751" : 1,
-  "2427" : 1,
-  "4050" : 1,
-  "8993" : 1,
-  "214216" : 1 };
-
 /*
         "place-davis" :
           { stop_id : "place-davis", name : "Davis Station", latitude : 42.39674, longitude: -71.121815 },
@@ -254,6 +310,262 @@ var g_bus_route_hash = {
           { stop_id : "place-portr", name : "Porter Square Station", latitude : 42.3884, longitude: -71.119149 }
       };
 */
+
+//----------------------------------
+//
+// Cookie save state management
+//
+//----------------------------------
+
+function clearCookieState() {
+}
+
+function saveCookieState( ) {
+}
+
+function restoreCookieState( ) {
+  var version = $.cookie('version');
+  var active = $.cookie('active');
+  var filt = $.cookie('filt');
+}
+
+
+//----------------------------------
+//
+// Cookie save state management
+//
+//----------------------------------
+
+
+var g_bus_route_hash = {
+  "01":"1", "04":"4", "05":"5", "07":"7", "08":"8", "09":"9",
+  "1":"1", "4":"4", "5":"5", "7":"7", "8":"8", "9":"9",
+  "10":"10", "11":"11", "14":"14", "15":"15", "16":"16", "17":"17", "18":"18", "19":"19",
+  "21":"21", "22":"22", "23":"23", "24":"24", "26":"26", "27":"27", "28":"28", "29":"29",
+  "2427":"2427",
+  "30":"30", "31":"31", "32":"32", "33":"33", "34":"34", "35":"35", "36":"36", "37":"37", "38":"38", "39":"39",
+  "34E":"34E",
+  "3233":"3233",
+  "3738":"3738",
+  "40":"40", "41":"41", "42":"42", "43":"43", "44":"44", "45":"45", "47":"47",
+  "4050":"4050",
+  "50":"50", "51":"51", "52":"52", "55":"55", "57":"57", "59":"59",
+  "57A":"57A",
+  "60":"60", "62":"62", "64":"64", "65":"65", "66":"66", "67":"67", "68":"68", "69":"69",
+  "627":"627",
+  "70":"70", "70A":"70A", "71":"71", "72":"72", "725":"725", "73":"73", "74":"74", "75":"75", "76":"76", "77":"77", "78":"78", "79":"79",
+  "80":"80", "83":"83", "84":"84", "85":"85", "86":"86", "87":"87", "88":"88", "89":"89",
+  "8993":"8993",
+  "90":"90", "91":"91", "92":"92", "93":"93", "94":"94", "95":"95", "96":"96", "97":"97", "99":"99",
+  "100":"100", "101":"101", "104":"104", "105":"105", "106":"106", "108":"108", "109":"109",
+  "110":"110", "111":"111", "112":"112", "114":"114", "116":"116", "117":"117", "119":"119",
+  "116117":"116117",
+  "120":"120", "121":"121", "131":"131", "132":"132",
+  "134":"134", "136":"136", "137":"137",
+  "170":"170", "171":"171",
+  "201":"201", "202":"202",
+  "210":"210", "211":"211", "212":"212", "214":"214", "215":"215", "216":"216", "217":"217",
+  "214216":"214216",
+  "220":"220", "221":"221", "222":"222", "225":"225",
+  "230":"230", "236":"236", "238":"238",
+  "240":"240", "245":"245",
+  "274":"274", "275":"275", "276":"276", "277":"277",
+  "325":"325", "326":"326",
+  "350":"350", "351":"351", "352":"352", "354":"354",
+  "411":"411",
+  "424":"424", "426":"426", "428":"428", "429":"429",
+  "430":"430", "431":"431", "434":"434", "435":"435", "436":"436", "439":"439",
+  "441":"441", "442":"442", "448":"448", "449":"449",
+  "441442":"441442",
+  "450":"450", "451":"451", "455":"455", "456":"456", "459":"459",
+  "465":"465",
+  "501":"501", "502":"502", "503":"503", "504":"504", "505":"505",
+  "553":"553", "554":"554", "556":"556", "558":"558",
+  "608":"608",
+  "701":"701",
+  "710":"710", "712":"712", "713":"713", "714":"714", "716":"716",
+  "747":"747", "708":"708", "746":"746", "741":"741", "742":"742", "751":"751", "749":"749",
+  "9701":"9701", "9702":"9702", "9703":"9703"
+}
+
+//--------------------------
+//
+// Toggle filter functions
+//
+//--------------------------
+
+function toggleGroupIcon( id_str, val ) {
+  var ele = document.getElementById( "img_" + id_str );
+
+  if (val == 0) {
+    ele.style.opacity = "0.3";
+  } else {
+    ele.style.opacity = "1.0";
+  }
+
+}
+
+
+function _updateFilterGroup( id_str, filter ) {
+  if (id_str in filter.group) {
+    filter.group[id_str] = 1-filter.group[id_str];
+    var v = filter.group[id_str];
+    for (var ind in filter.route_group_map[id_str]) {
+      filter.route[ ind ] = v;
+    }
+  }
+}
+
+function toggleSubwayGroup( id_str ) {
+  //toggleGroup( id_str, g_subway_filter.group );
+
+  var filter = g_subway_filter;
+
+  if (filter["state"] == "active")
+  {
+    _updateFilterGroup( id_str, filter );
+    toggleGroupIcon( id_str, g_subway_filter.group[id_str] );
+
+    for (var subway_id in g_subway_marker) {
+      drawSubwayMarker( subway_id );
+    }
+
+    var count=0;
+    for (var ind in filter.group) { count+=filter.group[ind]; }
+
+    if (count==0) {
+      filter["state"] = "default_disable";
+      toggleSubwayFeed();
+    }
+
+  }
+  else if ( filter["state"] == "default_disable" )
+  {
+    _updateFilterGroup( id_str, filter );
+    toggleGroupIcon( id_str, g_subway_filter.group[id_str] );
+
+    filter["state"] = "active";
+    toggleSubwayFeed();
+  }
+  else if ( filter["state"] == "default_enable" )
+  {
+    _updateFilterGroup( id_str, filter );
+    toggleGroupIcon( id_str, g_subway_filter.group[id_str] );
+
+    filter["state"] = "active";
+    for (var subway_id in g_subway_marker) {
+      drawSubwayMarker( subway_id );
+    }
+  }
+
+}
+
+function toggleCommuterGroup( id_str ) {
+
+  if ( !(id_str in g_commuter_filter.group) ) {
+    g_commuter_filter.group[id_str] = 0;
+    g_commuter_filter.route_group_map[id_str] = { };
+    g_commuter_filter.route_group_map[id_str][id_str] = 1;
+    g_commuter_filter.route[id_str]=0;
+  }
+
+  var filter = g_commuter_filter;
+
+  if (filter["state"] == "active")
+  {
+    _updateFilterGroup( id_str, filter );
+    toggleGroupIcon( id_str, g_commuter_filter.group[id_str] );
+
+    for (var commuter_id in g_commuter_marker) {
+      drawCommuterMarker( commuter_id );
+    }
+
+    var count=0;
+    for (var ind in filter.group) { count+=filter.group[ind]; }
+
+    if (count==0) {
+      filter["state"] = "default_disable";
+      toggleCommuterFeed();
+    }
+
+  }
+  else if ( filter["state"] == "default_disable" )
+  {
+    _updateFilterGroup( id_str, filter );
+    toggleGroupIcon( id_str, g_commuter_filter.group[id_str] );
+
+    filter["state"] = "active";
+    toggleCommuterFeed();
+  }
+  else if ( filter["state"] == "default_enable" )
+  {
+    _updateFilterGroup( id_str, filter );
+    toggleGroupIcon( id_str, g_commuter_filter.group[id_str] );
+
+    filter["state"] = "active";
+    for (var commuter_id in g_commuter_marker) {
+      drawCommuterMarker( commuter_id );
+    }
+  }
+
+}
+
+function toggleBusGroup( id_str ) {
+  if ( !(id_str in g_bus_filter.group) ) {
+    g_bus_filter.group[id_str] = 0;
+    g_bus_filter.route_group_map[id_str] = {};
+    g_bus_filter.route_group_map[id_str][id_str] = 1;
+    g_bus_filter.route[id_str]=0;
+  }
+
+
+  var filter = g_bus_filter;
+
+  if (filter["state"] == "active")
+  {
+    _updateFilterGroup( id_str, filter );
+    toggleGroupIcon( id_str, g_bus_filter.group[id_str] );
+
+    for (var bus_id in g_bus_marker) {
+      drawBusMarker( bus_id );
+    }
+
+    var count=0;
+    for (var ind in filter.group) { count+=filter.group[ind]; }
+
+    if (count==0) {
+      filter["state"] = "default_disable";
+      toggleBusFeed();
+    }
+
+  }
+  else if ( filter["state"] == "default_disable" )
+  {
+    _updateFilterGroup( id_str, filter );
+    toggleGroupIcon( id_str, g_bus_filter.group[id_str] );
+
+    filter["state"] = "active";
+    toggleBusFeed();
+  }
+  else if ( filter["state"] == "default_enable" )
+  {
+    _updateFilterGroup( id_str, filter );
+    toggleGroupIcon( id_str, g_bus_filter.group[id_str] );
+
+    filter["state"] = "active";
+    for (var bus_id in g_bus_marker) {
+      drawBusMarker( bus_id );
+    }
+  }
+
+}
+
+//--------------------------
+//
+// Toggle filter functions
+//
+//--------------------------
+
 
 //--------------------------
 // client socket maintenance
@@ -294,6 +606,17 @@ function drawBusMarker(busid) {
     delete g_bus_marker[busid].offset;
   }
 
+  var route = dat.RouteId;
+
+  if ( g_bus_filter.state == "active" ) {
+    if ((route in g_bus_filter.route) &&
+        (g_bus_filter.route[route]==0))
+    {
+      return;
+    }
+  }
+
+
   var lonlat =  new OpenLayers.LonLat( dat.Long, dat.Lat )
       .transform(
         new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984
@@ -307,6 +630,7 @@ function drawBusMarker(busid) {
   // route number bubble.
   //
   var fudge_w = 0;
+
   if ( dat.Route in g_bus_route_hash ) {
     var l  = dat.Route.length;
     var bub_width = (l*4) + 2 + 2;
@@ -337,12 +661,16 @@ function drawBusMarker(busid) {
   var bus_opacity = 0.5;
 
   var icon ;
-  if ( dat.Heading != "" ) {
+  if ( dat.Heading !== "" ) {
     var iheading = Math.floor( (parseInt( dat.Heading ) + 23) / 45 );
     if (iheading > 7) { iheading = 0; }
 
-    if ( dat.Route in g_bus_route_hash ) {
-      icon = new OpenLayers.Icon("img/bus_route_icon/bus_gw_r" + dat.Route + "_"  + headingLookup[iheading] + ".png", size, offset);
+    if ( dat.RouteId in g_bus_route_hash ) {
+      //icon = new OpenLayers.Icon("img/bus_route_icon/bus_gw_r" + dat.Route + "_"  + headingLookup[iheading] + ".png", size, offset);
+
+      var rt = g_bus_route_hash[ dat.RouteId ];
+      icon = new OpenLayers.Icon("img/bus_route_icon/bus_gw_r" + rt + "_"  + headingLookup[iheading] + ".png", size, offset);
+
       icon.setOpacity( bus_opacity );
     } else {
       icon = new OpenLayers.Icon("img/bus_gw_"  + headingLookup[iheading] + ".png", size, offset);
@@ -364,87 +692,30 @@ function drawBusMarker(busid) {
 
 }
 
-/*
-
-function drawBusMarker(busid, busType) {
+function drawSubwayMarker(subwayid) {
   var headingLookup = [ "0", "45", "90", "135", "180", "225", "270", "315" ];
 
-  var dat = g_bus_marker[busid];
+  var dat = g_subway_marker[subwayid];
 
   // Remove it
   //
-  if ( "osm_marker" in dat ) {
+  if ( ("osm_marker" in dat) && dat["osm_marker"]) {
     var m = dat["osm_marker"];
-    g_bus_marker_layer.removeMarker(m);
-    delete g_bus_marker[busid].osm_marker;
-    delete g_bus_marker[busid].icon;
-    delete g_bus_marker[busid].size;
-    delete g_bus_marker[busid].offset;
+    g_subway_marker_layer.removeMarker(m);
+    delete g_subway_marker[subwayid].osm_marker;
+    delete g_subway_marker[subwayid].icon;
+    delete g_subway_marker[subwayid].size;
+    delete g_subway_marker[subwayid].offset;
   }
 
-  var lonlat =  new OpenLayers.LonLat( dat.Long, dat.Lat )
-      .transform(
-        new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984
-        g_map.getProjectionObject() // to Spherical Mercator Projection
-      );
+  var route = dat.RouteId;
 
-  var scale_factor = 1.0;
-  var bus_w = g_param.bus_w;
-  var bus_h = g_param.bus_h;
-
-  if ( g_map.zoom < 8 ) { return; }
-
-  if ( ( g_map.zoom <= 13 ) && ( g_map.zoom >= 8) )
-  {
-    scale_factor = Math.exp( Math.log(2) * (g_map.zoom-14) );
-    bus_w *= scale_factor;
-    bus_h *= scale_factor;
-  }
-
-  var size = new OpenLayers.Size(bus_w,bus_h);
-  var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
-
-  var icon ;
-  if (busType == "bus") {
-    var iheading = Math.floor( (parseInt( dat.Heading ) + 23) / 45 );
-    if (iheading > 7) { iheading = 0; }
-
-    if (dat["Route"] in g_bus_route_hash) {
-      icon = new OpenLayers.Icon("img/bus_route_icon/bus_gw_r" + dat["Route"] + "_"  + headingLookup[iheading] + ".png", size, offset);
-    } else {
-      icon = new OpenLayers.Icon("img/bus_gw_"  + headingLookup[iheading] + ".png", size, offset);
+  if ( g_subway_filter.state == "active" ) {
+    if ((route in g_subway_filter.route) &&
+        (g_subway_filter.route[route]==0))
+    {
+      return;
     }
-    icon.setOpacity(0.75);
-  } else {
-    icon = new OpenLayers.Icon("img/underground_" + busType + ".png", size, offset);
-  }
-  dat["osm_marker"] = new OpenLayers.Marker( lonlat, icon );
-  dat["osm_marker"].events.register('mousedown',
-                                    dat["osm_marker"],
-                                    (function(xx) { return function() { handlePopup(xx); }; })(busid) );
-  dat["icon"] = icon;
-  dat["size"] = size;
-  dat["offset"] = offset;
-
-  g_bus_marker_layer.addMarker( dat["osm_marker"] );
-
-}
-*/
-
-function drawMetroMarker(metroid) {
-  var headingLookup = [ "0", "45", "90", "135", "180", "225", "270", "315" ];
-
-  var dat = g_metro_marker[metroid];
-
-  // Remove it
-  //
-  if ( "osm_marker" in dat ) {
-    var m = dat["osm_marker"];
-    g_metro_marker_layer.removeMarker(m);
-    delete g_metro_marker[metroid].osm_marker;
-    delete g_metro_marker[metroid].icon;
-    delete g_metro_marker[metroid].size;
-    delete g_metro_marker[metroid].offset;
   }
 
   var lonlat =  new OpenLayers.LonLat( dat.Long, dat.Lat )
@@ -476,14 +747,35 @@ function drawMetroMarker(metroid) {
     var route = dat.Route;
     if (iheading > 7) { iheading = 0; }
 
-    if ((dat.Route == "red") || (dat.Route == "orange") || (dat.Route == "blue")) {
-      icon = new OpenLayers.Icon("img/metro_" + route + "_" + headingLookup[iheading] + ".png", size, offset);
-    } else {
-      icon = new OpenLayers.Icon("img/underground_simple.png", size, offset);
+    if ( (g_subway_filter.state != "active") || g_subway_filter.route[dat.RouteId]) {
+      var route = dat.RouteInfo;
+
+      var dummy_ind = route.indexOf("green");
+      if (dummy_ind != 0) {
+        icon = new OpenLayers.Icon("img/metro_" + route + "_" + headingLookup[iheading] + ".png", size, offset);
+      } else {
+        route = "green";
+        var rgm = g_subway_filter.route_group_map;
+        if ( dat.RouteId in rgm["green-b-route"] ) {
+          icon = new OpenLayers.Icon("img/metro_" + route + "_rB_" + headingLookup[iheading] + ".png", size, offset);
+        } else if ( dat.RouteId in rgm["green-c-route"] ) {
+          icon = new OpenLayers.Icon("img/metro_" + route + "_rC_" + headingLookup[iheading] + ".png", size, offset);
+        } else if ( dat.RouteId in rgm["green-d-route"] ) {
+          icon = new OpenLayers.Icon("img/metro_" + route + "_rD_" + headingLookup[iheading] + ".png", size, offset);
+        } else if ( dat.RouteId in rgm["green-e-route"] ) {
+          icon = new OpenLayers.Icon("img/metro_" + route + "_rE_" + headingLookup[iheading] + ".png", size, offset);
+        } else {
+          icon = new OpenLayers.Icon("img/metro_" + route + "_" + headingLookup[iheading] + ".png", size, offset);
+        }
+      }
+      //else {
+      //  icon = new OpenLayers.Icon("img/underground_simple.png", size, offset);
+      //}
+      icon.setOpacity(0.75);
     }
-    icon.setOpacity(0.75);
+
   } else {
-    if ((dat.Route == "red") || (dat.Route == "orange") || (dat.Route == "blue")) {
+    if ((dat.Route == "red") || (dat.Route == "orange") || (dat.Route == "blue") || (dat.Route == "green")) {
       icon = new OpenLayers.Icon("img/metro_" + dat.Route + ".png", size, offset);
     } else {
       icon = new OpenLayers.Icon("img/underground_simple.png", size, offset);
@@ -494,12 +786,12 @@ function drawMetroMarker(metroid) {
   dat["osm_marker"] = new OpenLayers.Marker( lonlat, icon );
   dat["osm_marker"].events.register('mousedown',
                                     dat["osm_marker"],
-                                    (function(xx) { return function() { handlePopup(xx); }; })(metroid) );
+                                    (function(xx) { return function() { handlePopup(xx); }; })(subwayid) );
   dat["icon"] = icon;
   dat["size"] = size;
   dat["offset"] = offset;
 
-  g_metro_marker_layer.addMarker( dat["osm_marker"] );
+  g_subway_marker_layer.addMarker( dat["osm_marker"] );
 
 }
 
@@ -520,6 +812,17 @@ function drawCommuterMarker(commuterid) {
     delete g_commuter_marker[commuterid].size;
     delete g_commuter_marker[commuterid].offset;
   }
+
+  var route = dat.RouteId;
+
+  if ( g_commuter_filter.state == "active" ) {
+    if ((route in g_commuter_filter.route) &&
+        (g_commuter_filter.route[route]==0))
+    {
+      return;
+    }
+  }
+
 
   var lonlat =  new OpenLayers.LonLat( dat.Long, dat.Lat )
       .transform(
@@ -544,7 +847,7 @@ function drawCommuterMarker(commuterid) {
   var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
 
   var icon ;
-  if ( dat.Heading != "" ) {
+  if ( ( dat.Heading != "" ) && (dat.Heading !== null) )  {
     var iheading = Math.floor( (parseInt( dat.Heading ) + 23) / 45 );
     if (iheading > 7) { iheading = 0; }
     icon = new OpenLayers.Icon("img/commuter_"  + headingLookup[iheading] + ".png", size, offset);
@@ -573,16 +876,40 @@ function RTBusUpdate(data) {
   var id = data.id;
   var timestamp = data.timestamp;
   var route = data.route;
+  var route_id = data.route_id;
+  var route_info = data.route_info;
+  var route_group = data.route_group;
   var lat = data.lat;
   var lon = data.lon;
   var heading = data.heading;
   var status = data.status;
+  var trip_name = data.trip_name;
+
+  // I'm lazy, fill in default bus routes here.
+  //
+  if (!(route_id in g_bus_filter.group)) {
+    g_bus_filter.group[route_id] = 0;
+  }
+
+  if (!(route_id in g_bus_filter.route_group_map)) {
+    g_bus_filter.route_group_map[route_id] = {};
+    g_bus_filter.route_group_map[route_id][route_id] = 1;
+  }
+
+  if (!(route_id in g_bus_filter.route)) {
+    g_bus_filter.route[route_id] = 0;
+  }
 
   if ( status == "delete" )
   {
     if (g_verbose) { console.log("DELETE Bus", id ); }
     if (id in g_bus_marker) {
-      g_bus_marker_layer.removeMarker( g_bus_marker[id]["osm_marker"] );
+
+      if (("osm_marker" in g_bus_marker[id]) &&
+           g_bus_marker[id]["osm_marker"])
+      {
+        g_bus_marker_layer.removeMarker( g_bus_marker[id]["osm_marker"] );
+      }
       delete g_bus_marker[ id ];
     }
   } else {
@@ -596,6 +923,10 @@ function RTBusUpdate(data) {
     g_bus_marker[ id ].Timestamp = timestamp;
     g_bus_marker[ id ].Heading = heading;
     g_bus_marker[ id ].Route = route;
+    g_bus_marker[ id ].RouteId = route_id;
+    g_bus_marker[ id ].RouteInfo= route_info;
+    g_bus_marker[ id ].RouteGroup= route_group;
+    g_bus_marker[ id ].TripName = trip_name;
     g_bus_marker[ id ].Lat = lat;
     g_bus_marker[ id ].Long = lon;
 
@@ -606,38 +937,51 @@ function RTBusUpdate(data) {
 }
 
 
-function RTMetroUpdate(data) {
-  if (g_verbose) { console.log("RTMetroUpdate:", data ); }
+function RTSubwayUpdate(data) {
+  if (g_verbose) { console.log("RTSubwayUpdate:", data ); }
 
   var id = data.id;
   var timestamp = data.timestamp;
   var route = data.route;
+  var route_id = data.route_id;
   var lat = data.lat;
   var lon = data.lon;
   var heading = data.heading;
   var status = data.status;
+  var trip_name = data.trip_name;
+  var route_info = data.route_info;
+  var route_group = data.route_group;
 
   if ( status == "delete" )
   {
-    if (g_verbose) { console.log("DELETE Metro", id ); }
-    if (id in g_metro_marker) {
-      g_metro_marker_layer.removeMarker( g_metro_marker[id]["osm_marker"] );
-      delete g_metro_marker[ id ];
+    if (g_verbose) { console.log("DELETE Subway", id ); }
+    if (id in g_subway_marker) {
+
+      if (("osm_marker" in g_subway_marker[id]) &&
+           g_subway_marker[id]["osm_marker"])
+      {
+        g_subway_marker_layer.removeMarker( g_subway_marker[id]["osm_marker"] );
+      }
+      delete g_subway_marker[ id ];
     }
   } else {
 
-    if ( !(id in g_metro_marker) ) {
-      g_metro_marker[ id ] = {};
+    if ( !(id in g_subway_marker) ) {
+      g_subway_marker[ id ] = {};
     }
 
-    g_metro_marker[ id ].id = id;
-    g_metro_marker[ id ].Timestamp = timestamp;
-    g_metro_marker[ id ].Heading = heading;
-    g_metro_marker[ id ].Route = route;
-    g_metro_marker[ id ].Lat = lat;
-    g_metro_marker[ id ].Long = lon;
+    g_subway_marker[ id ].id = id;
+    g_subway_marker[ id ].Timestamp = timestamp;
+    g_subway_marker[ id ].Heading = heading;
+    g_subway_marker[ id ].Route = route;
+    g_subway_marker[ id ].RouteId = route_id;
+    g_subway_marker[ id ].RouteGroup = route_group;
+    g_subway_marker[ id ].RouteInfo = route_info;
+    g_subway_marker[ id ].TripName = trip_name;
+    g_subway_marker[ id ].Lat = lat;
+    g_subway_marker[ id ].Long = lon;
 
-    drawMetroMarker( data.id );
+    drawSubwayMarker( data.id );
 
   }
 
@@ -649,10 +993,28 @@ function RTCommuterUpdate(data) {
   var id = data.id;
   var timestamp = data.timestamp;
   var route = data.route;
+  var route_id = data.route_id;
+  var route_info = data.route_info;
+  var route_group = data.route_group;
   var lat = data.lat;
   var lon = data.lon;
   var heading = data.heading;
   var status = data.status;
+
+  // I'm lazy, fill in default commuter routes here.
+  //
+  if (!(route_id in g_commuter_filter.group)) {
+    g_commuter_filter.group[route_id] = 0;
+  }
+
+  if (!(route_id in g_commuter_filter.route_group_map)) {
+    g_commuter_filter.route_group_map[route_id] = { };
+    g_commuter_filter.route_group_map[route_id][route_id] = 1;
+  }
+
+  if (!(route_id in g_commuter_filter.route)) {
+    g_commuter_filter.route[route_id] = 0;
+  }
 
   if ( status == "delete" )
   {
@@ -660,7 +1022,12 @@ function RTCommuterUpdate(data) {
     if (g_verbose) { console.log("DELETE commuter", id ); }
 
     if (id in g_commuter_marker) {
-      g_commuter_marker_layer.removeMarker( g_commuter_marker[id]["osm_marker"] );
+
+      if (("osm_marker" in g_commuter_marker[id]) &&
+           g_commuter_marker[id]["osm_marker"])
+      {
+        g_commuter_marker_layer.removeMarker( g_commuter_marker[id]["osm_marker"] );
+      }
       delete g_commuter_marker[ id ];
     }
   } else {
@@ -673,6 +1040,9 @@ function RTCommuterUpdate(data) {
     g_commuter_marker[ id ].Timestamp = timestamp;
     g_commuter_marker[ id ].Heading = heading;
     g_commuter_marker[ id ].Route = route;
+    g_commuter_marker[ id ].RouteId = route_id;
+    g_commuter_marker[ id ].RouteGroup = route_group;
+    g_commuter_marker[ id ].RouteInfo = route_info;
     g_commuter_marker[ id ].Lat = lat;
     g_commuter_marker[ id ].Long = lon;
 
@@ -682,29 +1052,32 @@ function RTCommuterUpdate(data) {
 
 }
 
-var g_SERVER_ADDR = "bostontraintrack.com";
+//var g_SERVER_ADDR = "bostontraintrack.com";
+var g_SERVER_ADDR = "localhost";
 
-// New metro stream
+// New subway stream
 //
 function setupRTMStreams() {
-  g_metro_socket = io('http://' + g_SERVER_ADDR + ':8184');
-  g_metro_socket.on('connect', function() {
+  g_subway_socket = io('http://' + g_SERVER_ADDR + ':8181');
+  g_subway_socket.on('connect', function() {
     if (g_verbose) { console.log("connected!"); }
-    g_metro_socket.on('update', RTMetroUpdate );
-    g_metro_socket.on('disconnect', function() { console.log("disconnected"); });
+    g_subway_socket.on('update:subway', RTSubwayUpdate );
+    g_subway_socket.on('disconnect', function() { console.log("disconnected"); });
 
-    g_metro_socket.emit( "enable" );
+    g_subway_socket.emit( "enable:subway" );
   });
 }
 
 // Real Time Bus Stream
 //
 function setupRTBStreams() {
+  //MBTA bus feeds don't have proper heading.  Using next bus instead
+  //g_bus_socket = io('http://' + g_SERVER_ADDR + ':8181');
   g_bus_socket = io('http://' + g_SERVER_ADDR + ':8182');
   g_bus_socket.on('connect', function() {
     if (g_verbose) { console.log("connected!"); }
     //g_bus_socket.on('update', rtbusupdate );
-    g_bus_socket.on('update', RTBusUpdate );
+    g_bus_socket.on('update:bus', RTBusUpdate );
     g_bus_socket.on('disconnect', function() { console.log("disconnected"); });
   });
 }
@@ -712,24 +1085,25 @@ function setupRTBStreams() {
 // Real Time Commuter Stream
 //
 function setupRTCStreams() {
-  g_commuter_socket = io('http://' + g_SERVER_ADDR + ':8183');
+  g_commuter_socket = io('http://' + g_SERVER_ADDR + ':8181');
   g_commuter_socket.on('connect', function() {
     if (g_verbose) { console.log("connected!"); }
-    g_commuter_socket.on('update', RTCommuterUpdate );
+    g_commuter_socket.on('update:commuter', RTCommuterUpdate );
     g_commuter_socket.on('disconnect', function() { console.log("disconnected"); });
   });
 }
 
 //--------------------------
 
+// Resizes, etc.
+//
 function mapEvent(ev) {
   if (ev.type == "zoomend") {
 
-    if ( g_map.zoom <= 12 )
-    {
+    if ( g_map.zoom <= 12 ) {
 
-      for (var metro_id in g_metro_marker) {
-        drawMetroMarker( metro_id );
+      for (var subway_id in g_subway_marker) {
+        drawSubwayMarker( subway_id );
       }
 
       for (var bus_id in g_bus_marker) {
@@ -746,8 +1120,8 @@ function mapEvent(ev) {
     else
     {
 
-      for (var metro_id in g_metro_marker) {
-        drawMetroMarker( metro_id );
+      for (var subway_id in g_subway_marker) {
+        drawSubwayMarker( subway_id );
       }
 
       for (var bus_id in g_bus_marker) {
@@ -777,8 +1151,6 @@ function mapEvent(ev) {
 
 function drawStops( force ) {
 
-  //console.log("??", g_map.zoom, g_stops);
-
   if (!force) {
     if ( g_map.zoom < 8 ) { return; }
   }
@@ -786,20 +1158,15 @@ function drawStops( force ) {
 
   for (var ind in g_stops) {
     var st = g_stops[ind];
-    //var lonlat =  new OpenLayers.LonLat( st.longitude, st.latitude )
     var lonlat =  new OpenLayers.LonLat( st.lon, st.lat)
       .transform(
         new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984
         g_map.getProjectionObject() // to Spherical Mercator Projection
       );
 
-    //console.log("???");
-
     var scale_factor = 1.0;
     var stop_w = g_param.stop_w;
     var stop_h = g_param.stop_h;
-
-    //console.log("stop>>>", stop_w, stop_h);
 
     if ( ( g_map.zoom <= 13 ) && ( g_map.zoom >= 8) )
     {
@@ -808,11 +1175,8 @@ function drawStops( force ) {
       stop_h *= scale_factor;
     }
 
-
-
     var size = new OpenLayers.Size(stop_w, stop_h);
     var offset = new OpenLayers.Pixel( -(size.w/2), -(size.h/2) );
-
 
     code = st.code;
     var icon = new OpenLayers.Icon("img/metro_T_fade.png", size, offset);
@@ -822,6 +1186,8 @@ function drawStops( force ) {
       icon = new OpenLayers.Icon("img/metro_T_orange_fade.png", size, offset);
     } else if (/b/.test(code)) {
       icon = new OpenLayers.Icon("img/metro_T_blue_fade.png", size, offset);
+    } else if (/g/.test(code)) {
+      icon = new OpenLayers.Icon("img/metro_T_green_fade.png", size, offset);
     }
 
     var stopMarker = new OpenLayers.Marker( lonlat, icon );
@@ -845,7 +1211,9 @@ function initMap() {
   g_map.events.register( "move", g_map, mapEvent );
   g_map.events.register( "moveend", g_map, mapEvent );
 
-  var transportattrib = 'Maps © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap contributors</a> <br/> Data © <a href="http://www.thunderforest.com">Thunderforest</a> ';
+  var transportattrib =
+    'Maps © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>' +
+    ' <br/> Data © <a href="http://www.thunderforest.com">Thunderforest</a> ';
 
 
   var transport = new OpenLayers.Layer.OSM("Transport",
@@ -859,9 +1227,9 @@ function initMap() {
   g_map.addLayer(transport);
 
 
-  g_metro_marker_layer = new OpenLayers.Layer.Markers( "Metro" );
-  g_map.addLayer(g_metro_marker_layer);
-  g_map.setLayerIndex(g_metro_marker_layer, 97);
+  g_subway_marker_layer = new OpenLayers.Layer.Markers( "Subway" );
+  g_map.addLayer(g_subway_marker_layer);
+  g_map.setLayerIndex(g_subway_marker_layer, 97);
 
 
   g_bus_marker_layer = new OpenLayers.Layer.Markers( "Bus" );
@@ -911,24 +1279,81 @@ function initMap() {
 
 }
 
-function toggleBus() {
+
+function toggleSubwayFeed() {
+
+  var b = document.getElementById('subwayToggleInput');
+
+  if (g_subway_toggle_input == 0) {
+    g_subway_socket.emit("enable:subway");
+    b.src = "img/metro_gw_sq_inv.png";
+    g_subway_toggle_input = 1;
+
+    if ( g_subway_filter.state == "default_disable" ) {
+      g_subway_filter.state = "default_enable";
+    }
+
+  } else if (g_subway_toggle_input == 1 ) {
+
+    if ( g_subway_filter.state == "default_enable" ) {
+      g_subway_filter.state = "default_disable";
+    }
+
+    g_subway_socket.emit("disable:subway");
+    b.src = "img/metro_gw_sq.png";
+    g_subway_toggle_input = 0;
+
+    // Delete stale entries
+    //
+    for (var id in g_subway_marker) {
+
+      if (("osm_marker" in g_subway_marker[id]) &&
+           g_subway_marker[id]["osm_marker"] )
+      {
+        g_subway_marker_layer.removeMarker( g_subway_marker[id]["osm_marker"] );
+      }
+      delete g_subway_marker[ id ];
+    }
+    g_subway_marker_layer.redraw();
+
+  }
+
+  $("#subwayToggleInput").blur();
+
+}
+
+function toggleBusFeed() {
 
   var b = document.getElementById('busToggleInput');
 
   if (g_bus_toggle_input == 0) {
-    g_bus_socket.emit("enable");
+    g_bus_socket.emit("enable:bus");
     b.src = "img/bus_gw_sq_inv.png";
     g_bus_toggle_input = 1;
+
+    if ( g_bus_filter.state == "default_disable" ) {
+      g_bus_filter.state = "default_enable";
+    }
+
+
   } else if (g_bus_toggle_input == 1 ) {
 
-    g_bus_socket.emit("disable");
+    if ( g_bus_filter.state == "default_enable" ) {
+      g_bus_filter.state = "default_disable";
+    }
+
+    g_bus_socket.emit("disable:bus");
     b.src = "img/bus_gw_sq.png";
     g_bus_toggle_input = 0;
 
     // Delete stale entries
     //
     for (var id in g_bus_marker) {
-      g_bus_marker_layer.removeMarker( g_bus_marker[id]["osm_marker"] );
+      if (("osm_marker" in g_bus_marker[id]) &&
+           g_bus_marker[id]["osm_marker"] )
+      {
+        g_bus_marker_layer.removeMarker( g_bus_marker[id]["osm_marker"] );
+      }
       delete g_bus_marker[ id ];
     }
     g_bus_marker_layer.redraw();
@@ -939,22 +1364,37 @@ function toggleBus() {
 
 }
 
-function toggleCommuter() {
+function toggleCommuterFeed() {
+
 
   var b = document.getElementById('commuterToggleInput');
 
   if (g_commuter_toggle_input == 0) {
-    g_commuter_socket.emit("enable");
+    g_commuter_socket.emit("enable:commuter");
     b.src = "img/train_sq_inv.png";
     g_commuter_toggle_input = 1;
+
+    if ( g_commuter_filter.state == "default_disable" ) {
+      g_commuter_filter.state = "default_enable";
+    }
+
+
   } else if (g_commuter_toggle_input == 1 ) {
 
-    g_commuter_socket.emit("disable");
+    if ( g_commuter_filter.state == "default_enable" ) {
+      g_commuter_filter.state = "default_disable";
+    }
+
+    g_commuter_socket.emit("disable:commuter");
     b.src = "img/train_sq.png";
     g_commuter_toggle_input = 0;
 
     for (var id in g_commuter_marker) {
-      g_commuter_marker_layer.removeMarker( g_commuter_marker[id]["osm_marker"] );
+      if (("osm_marker" in g_commuter_marker[id]) &&
+           g_commuter_marker[id]["osm_marker"] )
+      {
+        g_commuter_marker_layer.removeMarker( g_commuter_marker[id]["osm_marker"] );
+      }
       delete g_commuter_marker[ id ];
     }
     g_commuter_marker_layer.redraw();
@@ -990,20 +1430,28 @@ $(document).ready( function() {
   setupRTBStreams();
   setupRTCStreams();
 
-  var b = document.getElementById('busToggle');
+  var b = document.getElementById('subwayToggle');
   b.style.top = '100px';
   b.style.left = '5px';
 
-  var b = document.getElementById('commuterToggle');
+  var b = document.getElementById('busToggle');
   b.style.top = '200px';
   b.style.left = '5px';
 
-  var b = document.getElementById('gpsToggle');
+  var b = document.getElementById('commuterToggle');
   b.style.top = '300px';
+  b.style.left = '5px';
+
+  var b = document.getElementById('gpsToggle');
+  b.style.top = '400px';
   b.style.left = '5px';
 
   var h = $(window).height();
   var w = $(window).width();
+
+  var b = document.getElementById('starIcon');
+  b.style.top = '250px';
+  b.style.left = (w-50) + 'px';
 
   var b = document.getElementById('gitlink');
   //b.style.top = (h-50) + "px";
@@ -1012,7 +1460,7 @@ $(document).ready( function() {
   b.style.left = (w-50) + 'px';
 
 
-  if (h > 450) {
+  if (h > 550) {
     /*
     var b = document.getElementById('gitlink');
     b.style.top = (h-50) + "px";
@@ -1042,25 +1490,20 @@ $(document).ready( function() {
     var h = $(window).height();
     var w = $(window).width();
 
+    if (h > 550) { $("#feedbacklink").show(); }
+    else         { $("#feedbacklink").hide(); }
+
     var b = document.getElementById('gitlink');
-    //b.style.top = (h-50) + "px";
-    //b.style.left = '5px';
     b.style.top = "5px";
     b.style.left = (w-50) + 'px';
 
+    var b = document.getElementById('starIcon');
+    b.style.top = '250px';
+    b.style.left = (w-50) + 'px';
+
     var b = document.getElementById('feedbacklink');
-    //b.style.top = (h-50) + "px";
-    //b.style.left = (w-50) + "px";
     b.style.top = (h-50) + "px";
     b.style.left = '5px';
-
-    if (h > 450) {
-      //$("#gitlink").show();
-      $("#feedbacklink").show();
-    } else {
-      //$("#gitlink").hide();
-      $("#feedbacklink").hide();
-    }
 
   });
 

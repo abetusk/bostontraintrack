@@ -775,8 +775,10 @@ function drawSubwayMarker(subwayid) {
     }
 
   } else {
-    if ((dat.Route == "red") || (dat.Route == "orange") || (dat.Route == "blue") || (dat.Route == "green")) {
-      icon = new OpenLayers.Icon("img/metro_" + dat.Route + ".png", size, offset);
+    var route = dat.RouteInfo;
+    //if ((dat.Route == "red") || (dat.Route == "orange") || (dat.Route == "blue") || (dat.Route == "green")) {
+    if ((route == "red") || (route == "orange") || (route == "blue") || (route == "green")) {
+      icon = new OpenLayers.Icon("img/metro_" + route + ".png", size, offset);
     } else {
       icon = new OpenLayers.Icon("img/underground_simple.png", size, offset);
     }

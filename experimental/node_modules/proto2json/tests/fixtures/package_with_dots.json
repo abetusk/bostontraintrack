@@ -1,0 +1,23 @@
+{
+  "package": "Foo.Bar",
+  "messages": {
+    "Open": {
+      "fields": {
+        "open": {
+          "rule": "required",
+          "type": "string",
+          "tag": 1
+        }
+      }
+    },
+    "OpenReflection": {
+      "fields": {
+        "open": {
+          "rule": "required",
+          "type": "Foo.Bar.Open",
+          "tag": 1
+        }
+      }
+    }
+  }
+}

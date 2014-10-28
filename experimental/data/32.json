@@ -1,0 +1,11 @@
+--2014-10-24 01:21:22--  http://realtime.mbta.com/developer/api/v2/vehiclesbyroute?api_key=wX9NwuHnZU2ToO7GmGR9uw&route=32&format=json
+Resolving realtime.mbta.com (realtime.mbta.com)... 107.21.97.19
+Connecting to realtime.mbta.com (realtime.mbta.com)|107.21.97.19|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 445 [application/json]
+Saving to: ‘vehiclesbyroute?api_key=wX9NwuHnZU2ToO7GmGR9uw&route=32&format=json’
+
+     0K                                                       100% 72.1M=0s
+
+2014-10-24 01:21:22 (72.1 MB/s) - ‘vehiclesbyroute?api_key=wX9NwuHnZU2ToO7GmGR9uw&route=32&format=json’ saved [445/445]
+

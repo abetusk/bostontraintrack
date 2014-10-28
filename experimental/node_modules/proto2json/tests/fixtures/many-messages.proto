@@ -1,0 +1,10 @@
+package Test;
+
+message Message1 {
+  required string name = 1;
+}
+
+message Message2 {
+  required string name = 1;
+  optional string description = 2;
+}

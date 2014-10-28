@@ -1,0 +1,9 @@
+package Foo.Bar;
+
+message Open {
+  required string open = 1;
+}
+
+message OpenReflection {
+  required Foo.Bar.Open open = 1;
+}

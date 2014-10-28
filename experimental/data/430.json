@@ -1,0 +1,6 @@
+--2014-10-24 01:22:01--  http://realtime.mbta.com/developer/api/v2/vehiclesbyroute?api_key=wX9NwuHnZU2ToO7GmGR9uw&route=430&format=json
+Resolving realtime.mbta.com (realtime.mbta.com)... 107.21.97.19
+Connecting to realtime.mbta.com (realtime.mbta.com)|107.21.97.19|:80... connected.
+HTTP request sent, awaiting response... 404 No data for
+2014-10-24 01:22:01 ERROR 404: No data for.
+

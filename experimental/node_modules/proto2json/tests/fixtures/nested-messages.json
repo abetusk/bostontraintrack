@@ -1,0 +1,47 @@
+{
+  "messages": {
+    "Outer": {
+      "messages": {
+        "MiddleAA": {
+          "messages": {
+            "Inner": {
+              "fields": {
+                "ival": {
+                  "rule": "required",
+                  "type": "int64",
+                  "tag": 1
+                },
+                "booly": {
+                  "rule": "optional",
+                  "type": "bool",
+                  "tag": 2
+                }
+              }
+            }
+          },
+          "fields": {}
+        },
+        "MiddleBB": {
+          "messages": {
+            "Inner": {
+              "fields": {
+                "ival": {
+                  "rule": "required",
+                  "type": "int32",
+                  "tag": 1
+                },
+                "booly": {
+                  "rule": "optional",
+                  "type": "bool",
+                  "tag": 2
+                }
+              }
+            }
+          },
+          "fields": {}
+        }
+      },
+      "fields": {}
+    }
+  }
+}

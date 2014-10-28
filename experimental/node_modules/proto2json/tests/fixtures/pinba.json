@@ -1,0 +1,92 @@
+{
+  "package": "Pinba",
+  "options": {
+    "optimize_for": "SPEED"
+  },
+  "messages": {
+    "Request": {
+      "fields": {
+        "hostname": {
+          "rule": "required",
+          "type": "string",
+          "tag": 1
+        },
+        "server_name": {
+          "rule": "required",
+          "type": "string",
+          "tag": 2
+        },
+        "script_name": {
+          "rule": "required",
+          "type": "string",
+          "tag": 3
+        },
+        "request_count": {
+          "rule": "required",
+          "type": "uint32",
+          "tag": 4
+        },
+        "document_size": {
+          "rule": "required",
+          "type": "uint32",
+          "tag": 5
+        },
+        "memory_peak": {
+          "rule": "required",
+          "type": "uint32",
+          "tag": 6
+        },
+        "request_time": {
+          "rule": "required",
+          "type": "float",
+          "tag": 7
+        },
+        "ru_utime": {
+          "rule": "required",
+          "type": "float",
+          "tag": 8
+        },
+        "ru_stime": {
+          "rule": "required",
+          "type": "float",
+          "tag": 9
+        },
+        "timer_hit_count": {
+          "rule": "repeated",
+          "type": "uint32",
+          "tag": 10
+        },
+        "timer_value": {
+          "rule": "repeated",
+          "type": "float",
+          "tag": 11
+        },
+        "timer_tag_count": {
+          "rule": "repeated",
+          "type": "uint32",
+          "tag": 12
+        },
+        "timer_tag_name": {
+          "rule": "repeated",
+          "type": "uint32",
+          "tag": 13
+        },
+        "timer_tag_value": {
+          "rule": "repeated",
+          "type": "uint32",
+          "tag": 14
+        },
+        "dictionary": {
+          "rule": "repeated",
+          "type": "string",
+          "tag": 15
+        },
+        "status": {
+          "rule": "optional",
+          "type": "uint32",
+          "tag": 16
+        }
+      }
+    }
+  }
+}

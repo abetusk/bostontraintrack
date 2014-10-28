@@ -1,0 +1,22 @@
+{
+  "package": "Test",
+  "options": {
+    "java_package": "com.example.foo",
+    "optimize_for": "SPEED",
+    "booly": true
+  },
+  "messages": {
+    "Foo": {
+      "options": {
+        "message_set_wire_format": true
+      },
+      "fields": {
+        "bar": {
+          "rule": "required",
+          "type": "string",
+          "tag": 1
+        }
+      }
+    }
+  }
+}

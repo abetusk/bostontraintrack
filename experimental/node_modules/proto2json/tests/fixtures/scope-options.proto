@@ -1,0 +1,12 @@
+package Test;
+
+option java_package = "com.example.foo";
+
+option optimize_for = SPEED;
+
+option booly = true;
+
+message Foo {
+  option message_set_wire_format = true;
+  required string bar = 1;
+}

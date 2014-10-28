@@ -1,0 +1,224 @@
+Subway,0,810_,Green Line
+Subway,0,813_,Green Line
+Subway,0,823_,Green Line
+Subway,0,830_,Green Line
+Subway,0,831_,Green Line
+Subway,0,840_,Green Line
+Subway,0,842_,Green Line
+Subway,0,851_,Green Line
+Subway,0,852_,Green Line
+Subway,0,880_,Green Line
+Subway,0,882_,Green Line
+Subway,0,899_,Mattapan Trolley
+Subway,1,946_,Blue Line
+Subway,1,948_,Blue Line
+Subway,1,903_,Orange Line
+Subway,1,913_,Orange Line
+Subway,1,931_,Red Line
+Subway,1,933_,Red Line
+Commuter Rail,2,CR-Fairmount,Fairmount Line
+Commuter Rail,2,CR-Fitchburg,Fitchburg/South Acton Line
+Commuter Rail,2,CR-Worcester,Framingham/Worcester Line
+Commuter Rail,2,CR-Franklin,Franklin Line
+Commuter Rail,2,CR-Greenbush,Greenbush Line
+Commuter Rail,2,CR-Haverhill,Haverhill Line
+Commuter Rail,2,CR-Kingston,Kingston/Plymouth Line
+Commuter Rail,2,CR-Lowell,Lowell Line
+Commuter Rail,2,CR-Middleborough,Middleborough/Lakeville Line
+Commuter Rail,2,CR-Needham,Needham Line
+Commuter Rail,2,CR-Newburyport,Newburyport/Rockport Line
+Commuter Rail,2,CR-Providence,Providence/Stoughton Line
+Bus,3,701,CT1
+Bus,3,747,CT2
+Bus,3,708,CT3
+Bus,3,746,Silver Line Waterfront
+Bus,3,741,SL1
+Bus,3,742,SL2
+Bus,3,751,SL4
+Bus,3,749,SL5
+Bus,3,01,1
+Bus,3,04,4
+Bus,3,05,5
+Bus,3,07,7
+Bus,3,08,8
+Bus,3,09,9
+Bus,3,10,10
+Bus,3,11,11
+Bus,3,14,14
+Bus,3,15,15
+Bus,3,16,16
+Bus,3,17,17
+Bus,3,18,18
+Bus,3,19,19
+Bus,3,21,21
+Bus,3,22,22
+Bus,3,23,23
+Bus,3,24,24
+Bus,3,2427,24/27
+Bus,3,26,26
+Bus,3,27,27
+Bus,3,28,28
+Bus,3,29,29
+Bus,3,30,30
+Bus,3,31,31
+Bus,3,32,32
+Bus,3,3233,32/33
+Bus,3,33,33
+Bus,3,34,34
+Bus,3,34E,34E
+Bus,3,35,35
+Bus,3,36,36
+Bus,3,37,37
+Bus,3,3738,37/38
+Bus,3,38,38
+Bus,3,39,39
+Bus,3,40,40
+Bus,3,4050,40/50
+Bus,3,41,41
+Bus,3,42,42
+Bus,3,43,43
+Bus,3,44,44
+Bus,3,45,45
+Bus,3,47,47
+Bus,3,50,50
+Bus,3,51,51
+Bus,3,52,52
+Bus,3,55,55
+Bus,3,57,57
+Bus,3,57A,57A
+Bus,3,59,59
+Bus,3,60,60
+Bus,3,62,62
+Bus,3,627,62/76
+Bus,3,64,64
+Bus,3,65,65
+Bus,3,66,66
+Bus,3,67,67
+Bus,3,68,68
+Bus,3,69,69
+Bus,3,70,70
+Bus,3,70A,70A
+Bus,3,71,71
+Bus,3,72,72
+Bus,3,725,72/75
+Bus,3,73,73
+Bus,3,74,74
+Bus,3,75,75
+Bus,3,76,76
+Bus,3,77,77
+Bus,3,78,78
+Bus,3,79,79
+Bus,3,80,80
+Bus,3,83,83
+Bus,3,84,84
+Bus,3,85,85
+Bus,3,86,86
+Bus,3,87,87
+Bus,3,88,88
+Bus,3,89,89
+Bus,3,8993,89/93
+Bus,3,90,90
+Bus,3,91,91
+Bus,3,92,92
+Bus,3,93,93
+Bus,3,94,94
+Bus,3,95,95
+Bus,3,96,96
+Bus,3,97,97
+Bus,3,99,99
+Bus,3,100,100
+Bus,3,101,101
+Bus,3,104,104
+Bus,3,105,105
+Bus,3,106,106
+Bus,3,108,108
+Bus,3,109,109
+Bus,3,110,110
+Bus,3,111,111
+Bus,3,112,112
+Bus,3,114,114
+Bus,3,116,116
+Bus,3,116117,116/117
+Bus,3,117,117
+Bus,3,119,119
+Bus,3,120,120
+Bus,3,121,121
+Bus,3,131,131
+Bus,3,132,132
+Bus,3,134,134
+Bus,3,136,136
+Bus,3,137,137
+Bus,3,170,170
+Bus,3,171,171
+Bus,3,201,201
+Bus,3,202,202
+Bus,3,210,210
+Bus,3,211,211
+Bus,3,212,212
+Bus,3,214,214
+Bus,3,214216,214/216
+Bus,3,215,215
+Bus,3,216,216
+Bus,3,217,217
+Bus,3,220,220
+Bus,3,221,221
+Bus,3,222,222
+Bus,3,225,225
+Bus,3,230,230
+Bus,3,236,236
+Bus,3,238,238
+Bus,3,240,240
+Bus,3,245,245
+Bus,3,274,274
+Bus,3,275,275
+Bus,3,276,276
+Bus,3,277,277
+Bus,3,325,325
+Bus,3,326,326
+Bus,3,350,350
+Bus,3,351,351
+Bus,3,352,352
+Bus,3,354,354
+Bus,3,411,411
+Bus,3,424,424
+Bus,3,426,426
+Bus,3,428,428
+Bus,3,429,429
+Bus,3,430,430
+Bus,3,431,431
+Bus,3,434,434
+Bus,3,435,435
+Bus,3,436,436
+Bus,3,439,439
+Bus,3,441,441
+Bus,3,441442,441/442
+Bus,3,442,442
+Bus,3,448,448
+Bus,3,449,449
+Bus,3,450,450
+Bus,3,451,451
+Bus,3,455,455
+Bus,3,456,456
+Bus,3,459,459
+Bus,3,465,465
+Bus,3,501,501
+Bus,3,502,502
+Bus,3,503,503
+Bus,3,504,504
+Bus,3,505,505
+Bus,3,553,553
+Bus,3,554,554
+Bus,3,556,556
+Bus,3,558,558
+Bus,3,608,608
+Bus,3,710,710
+Bus,3,712,712
+Bus,3,713,713
+Bus,3,714,714
+Bus,3,716,716
+Bus,3,9701,9701
+Bus,3,9702,9702
+Bus,3,9703,9703
+Boat,4,Boat-F4,Charlestown Ferry
+Boat,4,Boat-F1,Hingham Ferry
+Boat,4,Boat-F3,Hull Ferry

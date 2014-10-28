@@ -1,0 +1,5 @@
+package Test;
+
+message OneField {
+  required string name = 1;
+}

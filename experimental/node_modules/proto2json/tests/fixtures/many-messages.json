@@ -1,0 +1,28 @@
+{
+  "package": "Test",
+  "messages": {
+    "Message1": {
+      "fields": {
+        "name": {
+          "rule": "required",
+          "type": "string",
+          "tag": 1
+        }
+      }
+    },
+    "Message2": {
+      "fields": {
+        "name": {
+          "rule": "required",
+          "type": "string",
+          "tag": 1
+        },
+        "description": {
+          "rule": "optional",
+          "type": "string",
+          "tag": 2
+        }
+      }
+    }
+  }
+}

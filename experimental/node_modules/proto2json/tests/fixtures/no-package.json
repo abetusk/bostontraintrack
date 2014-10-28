@@ -1,0 +1,13 @@
+{
+  "messages": {
+    "OneField": {
+      "fields": {
+        "name": {
+          "rule": "required",
+          "type": "string",
+          "tag": 1
+        }
+      }
+    }
+  }
+}

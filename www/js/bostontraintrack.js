@@ -1301,8 +1301,8 @@ function RTCommuterUpdate(data) {
 
 }
 
-//var g_SERVER_ADDR = "bostontraintrack.com";
-var g_SERVER_ADDR = "localhost";
+var g_SERVER_ADDR = "bostontraintrack.com";
+//var g_SERVER_ADDR = "localhost";
 
 // New subway stream
 //

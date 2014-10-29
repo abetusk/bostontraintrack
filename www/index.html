@@ -24,30 +24,10 @@
    <script src='bootstrap/js/bootstrap.min.js'></script>
 
 
+   <link rel="stylesheet" href="css/font-awesome.min.css">
+
    <script>
-
-    var active_routes = {};
-    function toggle( id_str ) {
-      console.log(id_str);
-      var ele = document.getElementById( "img_" + id_str );
-
-      if ( id_str in active_routes ) {
-        if (active_routes[id_str] == 0) {
-          ele.style.opacity = "1.0";
-          active_routes[id_str] = 1;
-        } else {
-          ele.style.opacity = "0.3";
-          active_routes[id_str] = 0;
-        }
-      } else {
-        active_routes[id_str] = 0;
-        ele.style.opacity = "0.3";
-      }
-    }
-
-    </script>
-
-
+   </script>
 
    <style>
      .imgButtonToggle
@@ -96,11 +76,12 @@
       <input
         id='subwayToggleInput'
         type='image'
-        src='img/metro_gw_sq_inv.png'
+        src='img/metro_gw_sq.png'
         style=' height:47px; width:38px; '
         value='nothing'
         onclick='toggleSubwayFeed();' />
     </div>
+    <!-- src='img/metro_gw_sq_inv.png' -->
 
 
     <div id="busToggle" class="imgButtonToggle">
@@ -178,15 +159,15 @@
   <div class='row' style='margin-bottom:50px; margin-top:50px;'>
 
     <div  id='red-route' onclick='toggleSubwayGroup("red-route");'  class='col-sm-4' style='text-align:center;' >
-    <img id='img_red-route' src='img/metro_red_sq.png' style=' height:47px; width:38px; '  ></img> <br>
+    <img id='img_red-route' src='img/metro_red_sq.png' style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
     Red
     </div>
     <div  id='blue-route' onclick='toggleSubwayGroup("blue-route");'  class='col-sm-4' style='text-align:center;' >
-    <img id='img_blue-route' src='img/metro_blue_sq.png' style=' height:47px; width:38px; ' ></img> <br>
+    <img id='img_blue-route' src='img/metro_blue_sq.png' style=' height:47px; width:38px; opacity:0.3; ' ></img> <br>
     Blue
     </div>
     <div  id='orange-route' onclick='toggleSubwayGroup("orange-route");'  class='col-sm-4' style='text-align:center;' >
-    <img id='img_orange-route' src='img/metro_orange_sq.png' style=' height:47px; width:38px; ' ></img> <br>
+    <img id='img_orange-route' src='img/metro_orange_sq.png' style=' height:47px; width:38px; opacity:0.3; ' ></img> <br>
     Orange
     </div>
 
@@ -195,22 +176,22 @@
   <div class='row' style='margin-bottom:50px; margin-top:50px;'>
 
     <div  id='green-b-route' onclick='toggleSubwayGroup("green-b-route");'  class='col-sm-3' style='text-align:center;' >
-    <img id='img_green-b-route' src='img/metro_green_sq.png' style=' height:47px; width:38px; ' ></img> <br>
+    <img id='img_green-b-route' src='img/metro_green_sq.png' style=' height:47px; width:38px; opacity:0.3; ' ></img> <br>
     Green (B)
     </div>
 
     <div  id='green-c-route' onclick='toggleSubwayGroup("green-c-route");'  class='col-sm-3' style='text-align:center;' >
-    <img id='img_green-c-route' src='img/metro_green_sq.png' style=' height:47px; width:38px; ' ></img> <br>
+    <img id='img_green-c-route' src='img/metro_green_sq.png' style=' height:47px; width:38px; opacity:0.3; ' ></img> <br>
     Green (C)
     </div>
 
     <div  id='green-d-route' onclick='toggleSubwayGroup("green-d-route");'  class='col-sm-3' style='text-align:center;' >
-    <img id='img_green-d-route' src='img/metro_green_sq.png' style=' height:47px; width:38px; ' ></img> <br>
+    <img id='img_green-d-route' src='img/metro_green_sq.png' style=' height:47px; width:38px; opacity:0.3; ' ></img> <br>
     Green (D)
     </div>
 
     <div  id='green-e-route' onclick='toggleSubwayGroup("green-e-route");'  class='col-sm-3' style='text-align:center;' >
-    <img id='img_green-e-route' src='img/metro_green_sq.png' style=' height:47px; width:38px; ' ></img> <br>
+    <img id='img_green-e-route' src='img/metro_green_sq.png' style=' height:47px; width:38px; opacity:0.3; ' ></img> <br>
     Green (E)
     </div>
 
@@ -1099,6 +1080,15 @@
     <img id='img_9703' src='img/bus_gw_sq.png'  style=' height:47px; width:38px; opacity:0.3; '  ></img> <br>
     9703
     </div>
+  </div>
+
+  <div class='row' style='margin-bottom:50px; margin-top:200px;'>
+
+    <div  id='trash-route' onclick='trashState();'  class='col-sm-12' style='text-align:center;' >
+      <i class='fa fa-trash fa-3x'></i> <br>
+      Reset
+    </div>
+
   </div>
 
 

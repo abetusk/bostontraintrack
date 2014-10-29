@@ -48,11 +48,14 @@ var g_map;
 //  default_enable->active if any toggle element toggled
 //
 
+/*
 var g_subway_filter = {
   "state":"active",
+
   "group" : { "red-route":1, "blue-route":1, "orange-route":1,
               "green-b-route":1,"green-c-route":1,"green-d-route":1,"green-e-route":1 },
-   "route_group_map" : {
+
+  "route_group_map" : {
     "red-route" : { "931_":1, "933_":1 },
     "orange-route" : { "903_":1, "913_":1 },
     "blue-route" : { "946_":1, "948_":1 },
@@ -97,7 +100,59 @@ var g_subway_filter = {
     "899_":1
  }
 };
+*/
 
+var g_subway_filter = {
+  "state":"default_disable",
+
+  "group" : { "red-route":0, "blue-route":0, "orange-route":0,
+              "green-b-route":0,"green-c-route":0,"green-d-route":0,"green-e-route":0 },
+
+  "route_group_map" : {
+    "red-route" : { "931_":1, "933_":1 },
+    "orange-route" : { "903_":1, "913_":1 },
+    "blue-route" : { "946_":1, "948_":1 },
+    "green-b-route":  { "810_":1, "813_":1, "823_":1 },
+    "green-c-route": { "830_":1, "831_":1 },
+    "green-d-route" : { "840_":1, "842_":1, "851_":1, "852_":1 },
+    "green-e-route" : { "880_":1, "882_":1 }
+  },
+
+  "route":{
+    //green
+    // b        b         b
+    //
+    "810_":0, "813_":0, "823_":0,
+   
+    //green
+    //  c         c
+    "830_":0, "831_":0,
+
+    //green
+    //  d          d      d         d
+    "840_":0, "842_":0, "851_":0, "852_":0,
+   
+    //green
+    // e        e
+    "880_":0, "882_":0,
+
+    //orange
+    //
+    "946_":0, "948_":0,
+
+    //blue
+    //
+    "903_":0, "913_":0,
+
+    //red
+    //
+    "931_":0, "933_":0,
+
+    //trolly
+    //
+    "899_":0
+ }
+};
 
 var g_subway_marker = {};
 var g_subway_marker_popup = {};
@@ -130,7 +185,7 @@ var g_commuter_filter= { "state":"default_disable", "route":{}, "group":{}, "rou
 var g_commuter_marker = {};
 var g_commuter_marker_layer;
 
-var g_subway_toggle_input = 1;
+var g_subway_toggle_input = 0;
 var g_bus_toggle_input = 0;
 var g_gps_toggle_input = 0;
 var g_commuter_toggle_input = 0;
@@ -317,16 +372,195 @@ var g_stops =  {
 //
 //----------------------------------
 
+function trashState() {
+  clearCookieState();
+
+  var filter = [ g_subway_filter, g_commuter_filter, g_bus_filter ];
+  for (var i=0; i<3; i++) {
+    var routes = filter[i].route;
+    for (var route in routes) {
+      var img_id = "img_" + route.toString() ;
+      var ele = document.getElementById( img_id );
+      if (!ele) { continue; }
+      ele.style.opacity = "0.3";
+    }
+  }
+
+  clearFilter( g_subway_filter );
+  clearFilter( g_commuter_filter );
+  clearFilter( g_bus_filter );
+
+  restoreCookieState();
+}
+
 function clearCookieState() {
+  $.removeCookie("version", { path: '/' });
+  $.removeCookie("active", { path: '/' });
+  $.removeCookie("subway_group", { path: '/' });
+  $.removeCookie("commuter_group", { path: '/' });
+  $.removeCookie("bus_group", { path: '/' });
+}
+
+function cookie_state() {
+  console.log("version", $.cookie("version"))
+  console.log("active", $.cookie("active"))
+  console.log("subway_group", $.cookie("subway_group"))
+  console.log("commuter_group", $.cookie("commuter_group"))
+  console.log("bus_group", $.cookie("bus_group"))
 }
 
 function saveCookieState( ) {
+
+  $.cookie("version", g_VERSION, { expires: 365, path: '/' });
+
+  if (g_verbose) {
+    console.log("saving 'version' cookie:", g_VERSION );
+  }
+
+  /*
+  // State to code map
+  var scm = { "active":"a", "default_disable":"dd", "default_enable":"de" };
+  var active_str = scm[ g_subway_filter.state ] + "," +
+                   scm[ g_commuter_filter.state ] + "," +
+                   scm[ g_bus_filter.state ];
+                   */
+
+  var active_str = g_subway_toggle_input.toString() + "," +
+                   g_commuter_toggle_input.toString() + "," +
+                   g_bus_toggle_input.toString();
+
+  if (g_verbose) {
+    console.log("saving 'active' cookie:", active_str );
+  }
+
+  $.cookie("active", active_str, { expires: 365, path: '/' });
+
+  var s = "", c = "", b = "";
+
+  if (g_subway_filter.state == "active") {
+    for (var group_name in g_subway_filter.group) {
+      if (g_subway_filter.group[group_name]) {
+        if (s.length>0) { s += ","; }
+        s += group_name;
+      }
+    }
+  }
+
+  if (g_commuter_filter.state == "active") {
+    for (var group_name in g_commuter_filter.group) {
+      if (g_commuter_filter.group[group_name]) {
+        if (c.length>0) { c += ","; }
+        c += group_name;
+      }
+    }
+  }
+
+  if (g_bus_filter.state == "active") {
+    for (var group_name in g_bus_filter.group) {
+      if (g_bus_filter.group[group_name]) {
+        if (b.length>0) { b += ","; }
+        b += group_name;
+      }
+    }
+  }
+
+  if (g_verbose) {
+    console.log("saving cookie:", s, c, b );
+  }
+
+  $.cookie("subway_group", s , { expires: 365, path: '/' });
+  $.cookie("commuter_group", c , { expires: 365, path: '/' });
+  $.cookie("bus_group", b , { expires: 365, path: '/' });
+
+}
+
+function setupDefaultCookieState( ) {
+  $.cookie("version", g_VERSION, { expires: 365, path: '/' });
+
+  //var active_str = "a,dd,dd";
+  var active_str = "1,0,0";
+  $.cookie("active", active_str, { expires: 365, path: '/' });
+
+  var flist_str = "red-route,orange-route,blue-route,green-b-route,green-c-route,green-d-route,green-e-route";
+  //var flist_str = "red-route";
+  $.cookie("subway_group", flist_str, { expires: 365, path: '/' });
+
+  //var clist_str = "CR-Worcester,CR-Providence"
+  $.cookie("commuter_group", "", { expires: 365, path: '/' });
+  $.cookie("bus_group", "", { expires: 365, path: '/' });
+}
+
+function clearFilter( filter ) {
+  filter.state = "default_disable";
+  for (var g in filter.group) { filter.group[g] = 0; }
+  for (var r in filter.route) { filter.route[r] = 0; }
 }
 
 function restoreCookieState( ) {
   var version = $.cookie('version');
+  if (version != g_VERSION) {
+
+    console.log(">>>default");
+
+    setupDefaultCookieState();
+  }
+
   var active = $.cookie('active');
-  var filt = $.cookie('filt');
+  var sgroup = $.cookie('subway_group');
+  var cgroup = $.cookie('commuter_group');
+  var bgroup = $.cookie('bus_group');
+
+  if (g_verbose) {
+    console.log(version, active, sgroup, cgroup, bgroup);
+  }
+
+  // disable everything to begin with
+  //
+  clearFilter( g_subway_filter );
+  clearFilter( g_commuter_filter );
+  clearFilter( g_bus_filter );
+
+  var btog = active.split(',');
+
+  var filt = [ g_subway_filter, g_commuter_filter, g_bus_filter ];
+  var strgroup = [ sgroup, cgroup, bgroup ];
+  var togf = [ toggleSubwayGroup, toggleCommuterGroup, toggleBusGroup ];
+  var togfeedf = [ toggleSubwayFeed, toggleCommuterFeed, toggleBusFeed ];
+
+  for (var i=0; i<3; i++) {
+    var toggle_count=0;
+    var feed_func = togfeedf[i];
+
+    if (strgroup[i].length == 0) {
+      continue;
+    }
+
+    var glist = strgroup[i].split(',');
+    if (glist.length==0) { continue; }
+
+    var tog_f = togf[i];
+
+    for (var j=0; j<glist.length; j++) {
+      toggle_count++;
+      tog_f( glist[j] );
+    }
+
+  }
+
+  // The above 'toggle.*Group will toggle the feed if necessary, so we need
+  // to make sure the feed state is in line with the restored state.
+  //
+  var button_toggle = [ g_subway_toggle_input, g_commuter_toggle_input, g_bus_toggle_input ];
+
+  for (var i=0; i<3; i++) {
+    if (button_toggle[i].toString() != btog[i]) {
+      var feed_func = togfeedf[i];
+      feed_func();
+    }
+  }
+
+  saveCookieState();
+
 }
 
 
@@ -423,6 +657,7 @@ function toggleSubwayGroup( id_str ) {
 
   if (filter["state"] == "active")
   {
+
     _updateFilterGroup( id_str, filter );
     toggleGroupIcon( id_str, g_subway_filter.group[id_str] );
 
@@ -441,6 +676,7 @@ function toggleSubwayGroup( id_str ) {
   }
   else if ( filter["state"] == "default_disable" )
   {
+
     _updateFilterGroup( id_str, filter );
     toggleGroupIcon( id_str, g_subway_filter.group[id_str] );
 
@@ -457,6 +693,8 @@ function toggleSubwayGroup( id_str ) {
       drawSubwayMarker( subway_id );
     }
   }
+
+  saveCookieState();
 
 }
 
@@ -508,6 +746,8 @@ function toggleCommuterGroup( id_str ) {
     }
   }
 
+  saveCookieState();
+
 }
 
 function toggleBusGroup( id_str ) {
@@ -558,6 +798,8 @@ function toggleBusGroup( id_str ) {
     }
   }
 
+  saveCookieState();
+
 }
 
 //--------------------------
@@ -606,8 +848,9 @@ function drawBusMarker(busid) {
     delete g_bus_marker[busid].offset;
   }
 
-  var route = dat.RouteId;
+  if (!g_bus_toggle_input) { return; }
 
+  var route = dat.RouteId;
   if ( g_bus_filter.state == "active" ) {
     if ((route in g_bus_filter.route) &&
         (g_bus_filter.route[route]==0))
@@ -708,8 +951,10 @@ function drawSubwayMarker(subwayid) {
     delete g_subway_marker[subwayid].offset;
   }
 
-  var route = dat.RouteId;
 
+  if (!g_subway_toggle_input) { return; }
+
+  var route = dat.RouteId;
   if ( g_subway_filter.state == "active" ) {
     if ((route in g_subway_filter.route) &&
         (g_subway_filter.route[route]==0))
@@ -815,8 +1060,10 @@ function drawCommuterMarker(commuterid) {
     delete g_commuter_marker[commuterid].offset;
   }
 
-  var route = dat.RouteId;
 
+  if (!g_commuter_toggle_input) { return; }
+
+  var route = dat.RouteId;
   if ( g_commuter_filter.state == "active" ) {
     if ((route in g_commuter_filter.route) &&
         (g_commuter_filter.route[route]==0))
@@ -1066,7 +1313,7 @@ function setupRTMStreams() {
     g_subway_socket.on('update:subway', RTSubwayUpdate );
     g_subway_socket.on('disconnect', function() { console.log("disconnected"); });
 
-    g_subway_socket.emit( "enable:subway" );
+    //g_subway_socket.emit( "enable:subway" );
   });
 }
 
@@ -1078,7 +1325,6 @@ function setupRTBStreams() {
   g_bus_socket = io('http://' + g_SERVER_ADDR + ':8182');
   g_bus_socket.on('connect', function() {
     if (g_verbose) { console.log("connected!"); }
-    //g_bus_socket.on('update', rtbusupdate );
     g_bus_socket.on('update:bus', RTBusUpdate );
     g_bus_socket.on('disconnect', function() { console.log("disconnected"); });
   });
@@ -1269,6 +1515,8 @@ function initMap() {
     g_map.setCenter(lonLat, g_zoom);
   });
 
+  // Somewhere in Central Boston(ish)
+  //
   var lat = 42.3583183;
   var lon = -71.0584536;
   var lonLat;
@@ -1283,7 +1531,6 @@ function initMap() {
 
 
 function toggleSubwayFeed() {
-
   var b = document.getElementById('subwayToggleInput');
 
   if (g_subway_toggle_input == 0) {
@@ -1321,6 +1568,8 @@ function toggleSubwayFeed() {
   }
 
   $("#subwayToggleInput").blur();
+
+  saveCookieState();
 
 }
 
@@ -1363,6 +1612,7 @@ function toggleBusFeed() {
   }
 
   $("#busToggleInput").blur();
+  saveCookieState();
 
 }
 
@@ -1404,6 +1654,7 @@ function toggleCommuterFeed() {
   }
 
   $("#commuterToggleInput").blur();
+  saveCookieState();
 
 }
 
@@ -1508,6 +1759,8 @@ $(document).ready( function() {
     b.style.left = '5px';
 
   });
+
+  restoreCookieState();
 
 });
 

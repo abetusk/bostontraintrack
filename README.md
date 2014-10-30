@@ -13,7 +13,7 @@ LICENSE
 
 All source code is under GPL compatible licenses.
 See the headers of the source for the details of what each is under.
-The main `bostontraintrack.js` client JavaScript and metro, bus and commuter rail JavaScript servers (`srv_metro.js`, `srv_bus.js`, and `srv_commuter.js`) are under AGPL 3.0.
+The main `bostontraintrack.js` client JavaScript and metro, bus and commuter rail JavaScript servers (`srv_v2.js` and `srv_bus_v2.js`) are under AGPL 3.0.
 
 All artwork is under CC-BY-SA 3.0.
 
@@ -30,4 +30,7 @@ CREDITS
   - [Socket.io-client](https://github.com/Automattic/socket.io-client)
   - [MBTA Real Time Data](http://www.mbta.com/rider_tools/developers)
   - [Node.js](http://nodejs.org)
+  - [Bootstrap](http://getbootstrap.com)
+  - [ProtoBuf.js](https://github.com/dcodeIO/ProtoBuf.js)
+  - [Font Awesome](http://fortawesome.github.io/Font-Awesome/)
   - And many more!

@@ -22,21 +22,15 @@ The green lines are split out by their routes: B, C, D and E.  Each green line r
 
 NOTE: As of 2014-12-06, real-time green line data is only available for the above ground green lines.
 
-### Bus
-
-![Bus button](/misc/button_bus.png)
+### ![Bus button](/misc/button_bus.png) Bus
 
 This will enable all the bus filtering.  To filter by individual bus route, use the filtering option.
 
-### Commuter
-
-![Commuter button](/misc/button_commuter.png)
+### ![Commuter button](/misc/button_commuter.png) Commuter 
 
 This will enable all the commuter filtering.  There are 12 lines in all.  To filter by specific route, use the filtering option.
 
-### Route Filtering
-
-![Filter button](/misc/button_star.png)
+### ![Filter button](/misc/button_star.png) Route Filtering 
 
 Hitting the 'star' button on the right will bring a 'modal':
 
@@ -47,16 +41,12 @@ pops up.   Individual routes and lines can be toggled.  Choices are saved so sub
 need to be chosen again.
 
 
-### GPS Locator
-
-![Locator button](/misc/button_locator.png)
+### ![Locator button](/misc/button_locator.png) GPS Locator
 
 Hitting this button will center the map on your current GPS location.
 
 
-### Feedback
-
-![Filter button](/misc/button_feedback.png)
+### ![Filter button](/misc/button_feedback.png) Feedback
 
 This will direct you to a feedback page.  Feedback is always welcome!  Please tell me what's on your mind!  I can't
 promise to incorporate every feature but I can promise to try my best to read every message that's sent to me!

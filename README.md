@@ -15,9 +15,7 @@ Each of these three can be selected for using the buttons on the right.
 
 Session state is stored in a persistent cookie so selected routes will be enabled on subsequent visits.
 
-### Subway
-
-![Subway button](/misc/button_metro.png)
+### ![Subway button](/misc/button_metro.png) Subway 
 
 This will enable all the subway filtering.  By default, all subway lines are displayed, which includes the red, blue and orange lines.
 The green lines are split out by their routes: B, C, D and E.  Each green line route can be toggled individually in the 'filter' selection.

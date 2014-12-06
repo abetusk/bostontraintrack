@@ -10,10 +10,12 @@ See it live at [bostontraintrack.com](http://bostontraintrack.com).
 USAGE
 -----
 
-There is the possibility of viewing real-time data for the subway, the commuter rails and the buses.
-Each of these three can be selected for using the buttons on the right.
+There is the option of filtering by route or line for each of the subway, bus or commuter rail real-time feeds.
+Hit the 'star' button on the right to bring up the route filtering choices and toggle which routes or lines
+you would like to see.  You can toggle the subway, bus or commuter rail globally if you hit the appropriate
+icons on the left.
 
-Session state is stored in a persistent cookie so selected routes will be enabled on subsequent visits.
+Choices are saved (via a cookie) so that subsequent visits will retain the selected choices.
 
 ### Subway
 

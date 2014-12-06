@@ -15,22 +15,30 @@ Each of these three can be selected for using the buttons on the right.
 
 Session state is stored in a persistent cookie so selected routes will be enabled on subsequent visits.
 
-### Subway ![Subway button](/misc/button_metro.png)
+### Subway
+
+![Subway button](/misc/button_metro.png)
 
 This will enable all the subway filtering.  By default, all subway lines are displayed, which includes the red, blue and orange lines.
 The green lines are split out by their routes: B, C, D and E.  Each green line route can be toggled individually in the 'filter' selection.
 
 NOTE: As of 2014-12-06, real-time green line data is only available for the above ground green lines.
 
-### Bus ![Bus button](/misc/button_bus.png)
+### Bus
+
+![Bus button](/misc/button_bus.png)
 
 This will enable all the bus filtering.  To filter by individual bus route, use the filtering option.
 
-### Commuter ![Commuter button](/misc/button_commuter.png)
+### Commuter
+
+![Commuter button](/misc/button_commuter.png)
 
 This will enable all the commuter filtering.  There are 12 lines in all.  To filter by specific route, use the filtering option.
 
-### Route Filtering ![Filter button](/misc/button_star.png)
+### Route Filtering
+
+![Filter button](/misc/button_star.png)
 
 Hitting the 'star' button on the right will bring a 'modal':
 
@@ -41,12 +49,16 @@ pops up.   Individual routes and lines can be toggled.  Choices are saved so sub
 need to be chosen again.
 
 
-### GPS Locator ![Locator button](/misc/button_locator.png)
+### GPS Locator
+
+![Locator button](/misc/button_locator.png)
 
 Hitting this button will center the map on your current GPS location.
 
 
-### Feedback ![Filter button](/misc/button_feedback.png) 
+### Feedback
+
+![Filter button](/misc/button_feedback.png) 
 
 This will direct you to a feedback page.  Feedback is always welcome!  Please tell me what's on your mind!  I can't
 promise to incorporate every feature but I can promise to try my best to read every message that's sent to me!

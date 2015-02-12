@@ -26,6 +26,38 @@ var g_stop_layer ;
 var g_verbose=0;
 var g_map;
 
+var g_scale_factor = 1.0;
+
+// http://stackoverflow.com/questions/21741841/detecting-ios-android-operating-system
+//
+//  answered Feb 12 '14 at 23:24
+//  feeela
+//
+function getMobileOperatingSystem() {
+  var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+  if( userAgent.match( /iPad/i ) || userAgent.match( /iPhone/i ) || userAgent.match( /iPod/i ) )
+  {
+    return 'iOS';
+  }
+  else if( userAgent.match( /Android/i ) )
+  {
+    return 'Android';
+  }
+  else
+  {
+    return 'unknown';
+  }
+}
+
+var g_ostype = getMobileOperatingSystem();
+if ((g_ostype == "iOS") || (g_ostype == "Android")) {
+  g_scale_factor = 2.0;
+} else {
+  //g_scale_factor = 1.3;
+}
+
+
 // The g_(subway|bus|commuter)_filter_state variable
 // can be (active|default_disable|default_enable).
 // default_disable - don't subscribe to feed, don't display icons
@@ -886,16 +918,17 @@ function drawBusMarker(busid) {
     fudge_w = Math.floor( fudge_w / 0.8 );
   }
 
-  var scale_factor = 1.0;
+  var orig_scale_factor = g_scale_factor;
+  var scale_factor = orig_scale_factor;
   var bus_w = g_param.bus_w + fudge_w;
   var bus_h = g_param.bus_h;
 
   if ( ( g_map.zoom <= 13 ) && ( g_map.zoom >= 8) )
   {
-    scale_factor = Math.exp( Math.log(2) * (g_map.zoom-14) );
-    bus_w *= scale_factor;
-    bus_h *= scale_factor;
+    scale_factor = orig_scale_factor * Math.exp( Math.log(2) * (g_map.zoom-14) );
   }
+  bus_w *= scale_factor;
+  bus_h *= scale_factor;
 
   var size = new OpenLayers.Size(bus_w, bus_h);
   var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
@@ -969,7 +1002,8 @@ function drawSubwayMarker(subwayid) {
         g_map.getProjectionObject() // to Spherical Mercator Projection
       );
 
-  var scale_factor = 1.0;
+  var orig_scale_factor = g_scale_factor;
+  var scale_factor = orig_scale_factor;
   var bus_w = g_param.bus_w;
   var bus_h = g_param.bus_h;
 
@@ -977,10 +1011,12 @@ function drawSubwayMarker(subwayid) {
 
   if ( ( g_map.zoom <= 13 ) && ( g_map.zoom >= 8) )
   {
-    scale_factor = Math.exp( Math.log(2) * (g_map.zoom-14) );
-    bus_w *= scale_factor;
-    bus_h *= scale_factor;
+    scale_factor = orig_scale_factor * Math.exp( Math.log(2) * (g_map.zoom-14) );
+    //bus_w *= scale_factor;
+    //bus_h *= scale_factor;
   }
+  bus_w *= scale_factor;
+  bus_h *= scale_factor;
 
   var size = new OpenLayers.Size(bus_w,bus_h);
   var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
@@ -1079,7 +1115,8 @@ function drawCommuterMarker(commuterid) {
         g_map.getProjectionObject() // to Spherical Mercator Projection
       );
 
-  var scale_factor = 1.0;
+  var orig_scale_factor = g_scale_factor;
+  var scale_factor = orig_scale_factor;
   var bus_w = g_param.bus_w;
   var bus_h = g_param.bus_h;
 
@@ -1087,10 +1124,12 @@ function drawCommuterMarker(commuterid) {
 
   if ( ( g_map.zoom <= 13 ) && ( g_map.zoom >= 8) )
   {
-    scale_factor = Math.exp( Math.log(2) * (g_map.zoom-14) );
-    bus_w *= scale_factor;
-    bus_h *= scale_factor;
+    scale_factor = orig_scale_factor * Math.exp( Math.log(2) * (g_map.zoom-14) );
+    //bus_w *= scale_factor;
+    //bus_h *= scale_factor;
   }
+  bus_w *= scale_factor;
+  bus_h *= scale_factor;
 
   var size = new OpenLayers.Size(bus_w,bus_h);
   var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
@@ -1412,16 +1451,19 @@ function drawStops( force ) {
         g_map.getProjectionObject() // to Spherical Mercator Projection
       );
 
-    var scale_factor = 1.0;
+    var orig_scale_factor = g_scale_factor;
+    var scale_factor = orig_scale_factor;
     var stop_w = g_param.stop_w;
     var stop_h = g_param.stop_h;
 
     if ( ( g_map.zoom <= 13 ) && ( g_map.zoom >= 8) )
     {
-      scale_factor = Math.exp( Math.log(2) * (g_map.zoom-14) );
-      stop_w *= scale_factor;
-      stop_h *= scale_factor;
+      scale_factor = orig_scale_factor * Math.exp( Math.log(2) * (g_map.zoom-14) );
+      //stop_w *= scale_factor;
+      //stop_h *= scale_factor;
     }
+    stop_w *= scale_factor;
+    stop_h *= scale_factor;
 
     var size = new OpenLayers.Size(stop_w, stop_h);
     var offset = new OpenLayers.Pixel( -(size.w/2), -(size.h/2) );
@@ -1677,6 +1719,9 @@ function toggleGPS() {
 
 
 $(document).ready( function() {
+  var ico_w = 38, ico_h = 47;
+  var but_w = 38, but_h = 38;
+
   initMap();
   //setupRTStreams();
   setupRTMStreams();
@@ -1704,13 +1749,27 @@ $(document).ready( function() {
 
   var b = document.getElementById('starIcon');
   b.style.top = '250px';
-  b.style.left = (w-50) + 'px';
+  b.style.left = Math.floor(w-(g_scale_factor*50)) + 'px';
 
   var b = document.getElementById('gitlink');
   //b.style.top = (h-50) + "px";
   //b.style.left = '5px';
   b.style.top = "5px";
-  b.style.left = (w-50) + 'px';
+  b.style.left = Math.floor(w-(g_scale_factor*50)) + 'px';
+
+  var icos = [ "starIconInput", "gpsToggleInput", "commuterToggleInput", "subwayToggleInput", "busToggleInput" ];
+  for (var ind in icos) {
+    var ico = document.getElementById( icos[ind] );
+    ico.style.width = Math.floor( g_scale_factor * ico_w ) + "px";
+    ico.style.height = Math.floor( g_scale_factor * ico_h ) + "px";
+  }
+
+  var buttons = [ "feedbacklinkInput", "gitlinkInput" ];
+  for (var ind in buttons) {
+    var b = document.getElementById( buttons[ind] );
+    b.style.width = Math.floor( g_scale_factor * but_w ) + "px";
+    b.style.height = Math.floor( g_scale_factor * but_h ) + "px";
+  }
 
 
   if (h > 550) {
@@ -1724,7 +1783,7 @@ $(document).ready( function() {
     var b = document.getElementById('feedbacklink');
     //b.style.top = (h-50) + "px";
     //b.style.left = (w-50) + "px";
-    b.style.top = (h-50) + "px";
+    b.style.top = Math.floor(h-(g_scale_factor*50)) + "px";
     b.style.left = '5px';
 
   } else {
@@ -1748,14 +1807,14 @@ $(document).ready( function() {
 
     var b = document.getElementById('gitlink');
     b.style.top = "5px";
-    b.style.left = (w-50) + 'px';
+    b.style.left = Math.floor(w-(g_scale_factor*50)) + 'px';
 
     var b = document.getElementById('starIcon');
     b.style.top = '250px';
-    b.style.left = (w-50) + 'px';
+    b.style.left = Math.floor(w-(g_scale_factor*50)) + 'px';
 
     var b = document.getElementById('feedbacklink');
-    b.style.top = (h-50) + "px";
+    b.style.top = Math.floor(h-(g_scale_factor*50)) + "px";
     b.style.left = '5px';
 
   });

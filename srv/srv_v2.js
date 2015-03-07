@@ -204,6 +204,12 @@ function updateVehiclePositions( buf ) {
 
     if (vid in g_vehicle_data)
     {
+
+      // If the vid is in our vehicle list already and it's position has
+      // changed, update it.
+      //
+      // Else, mark it as idle.
+      //
       if ( (Math.abs(lat - g_vehicle_data[vid].lat) > 0.001) ||
            (Math.abs(lon - g_vehicle_data[vid].lon) > 0.001) )
       {
@@ -263,7 +269,7 @@ function updateVehiclePositions( buf ) {
   for ( var vid in g_vehicle_data )
   {
 
-    // For anythign other than an 'idle' message (that is,
+    // For anything other than an 'idle' message (that is,
     // a 'new' or 'delete'), push it to the client.
     //
     if ( g_vehicle_data[vid].status != "idle" ) {

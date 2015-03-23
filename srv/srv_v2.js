@@ -26,13 +26,13 @@ var http = require("http");
 var fs = require("fs");
 var sockio = require('socket.io')();
 var protobuf = require("protobufjs");
-var builder = protobuf.loadProtoFile("gtfs-realtime.proto");
+var builder = protobuf.loadProtoFile("/home/meow/.config/gtfs-realtime.proto");
 var feedmessage = builder.build("transit_realtime.FeedMessage");
 
-var g_route_info = JSON.parse( fs.readFileSync('route_info.json', 'utf8') );
+var g_route_info = JSON.parse( fs.readFileSync('/home/meow/.config/route_info.json', 'utf8') );
 
 var g_verbose = 1;
-var g_debug = 0;
+var g_debug = 1;
 
 var g_mbta_type = [ "", "subway", "commuter", "bus" ];
 
@@ -56,7 +56,7 @@ function flushSingleClientData( cli_id, feed_type )
   var all_feed = false;
   if (!feed_type) { all_feed = true; }
 
-  //if (g_verbose) { console.log(">>>>> flushing", cli_id ); }
+  if (g_verbose) { console.log(">>>>> flushing", cli_id ); }
 
   for (var vid in g_vehicle_data)
   {
@@ -68,7 +68,7 @@ function flushSingleClientData( cli_id, feed_type )
 
     var s = JSON.stringify( g_vehicle_data[vid] );
 
-    //if (g_verbose) { console.log("      ", vid, update_feed, ">>>", s); }
+    if (g_verbose) { console.log("   ", vid, update_feed, ">>>", s); }
 
     try 
     {
@@ -130,6 +130,7 @@ function pushData( vehicle_data )
 
           enable_count[f_ind]++;
           global_connect[ cli_id ].emit( "update" + feed, vehicle_data );
+
         }
       } catch (ee) {
         console.log("ERROR: pushing to client", cli_id, "(vehicle_id", vehicle_id, ") failed");
@@ -177,7 +178,7 @@ function updateVehiclePositions( buf ) {
   for ( var i=0; i<n; i++ )
   {
 
-    if (g_debug) { console.log( "ent[", i, "]:", ent[i]); }
+    //if (g_debug) { console.log( "ent[", i, "]:", ent[i]); }
 
     var veh = ent[i].vehicle;
 
@@ -248,7 +249,7 @@ function updateVehiclePositions( buf ) {
         status : "new",
         heading : heading };
 
-      //if (g_debug) { console.log("  new>>", vid, lat, lon, heading ); }
+      if (g_debug) { console.log("  new>>", vid, lat, lon, heading ); }
       //if (g_verbose) { console.log("  new>>", vid, lat, lon, heading ); }
 
     }

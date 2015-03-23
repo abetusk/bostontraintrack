@@ -1,4 +1,20 @@
 {
+  "Red" : { "route_id":"Red", "route_type":"Subway", "route_group":"subway", "route_name":"red line", "info":"red" },
+  "Orange" : { "route_id":"Orange", "route_type":"Subway", "route_group":"subway", "route_name":"orange line", "info":"orange" },
+  "Blue" : { "route_id":"Blue", "route_type":"Subway", "route_group":"subway", "route_name":"blue line", "info":"blue" },
+  "Green-B" : { "route_id":"Green-B", "route_type":"Subway", "route_group":"subway", "route_name":"green b line", "info":"green-b" },
+  "Green-C" : { "route_id":"Green-C", "route_type":"Subway", "route_group":"subway", "route_name":"green c line", "info":"green-c" },
+  "Green-D" : { "route_id":"Green-D", "route_type":"Subway", "route_group":"subway", "route_name":"green d line", "info":"green-d" },
+  "Green-E" : { "route_id":"Green-E", "route_type":"Subway", "route_group":"subway", "route_name":"green e line", "info":"green-e" },
+
+  "red" : { "route_id":"red", "route_type":"Subway", "route_group":"subway", "route_name":"red line", "info":"red" },
+  "orange" : { "route_id":"orange", "route_type":"Subway", "route_group":"subway", "route_name":"orange line", "info":"orange" },
+  "blue" : { "route_id":"blue", "route_type":"Subway", "route_group":"subway", "route_name":"blue line", "info":"blue" },
+  "green-b" : { "route_id":"green-b", "route_type":"Subway", "route_group":"subway", "route_name":"green b line", "info":"green-b" },
+  "green-c" : { "route_id":"green-c", "route_type":"Subway", "route_group":"subway", "route_name":"green c line", "info":"green-c" },
+  "green-d" : { "route_id":"green-d", "route_type":"Subway", "route_group":"subway", "route_name":"green d line", "info":"green-d" },
+  "green-e" : { "route_id":"green-e", "route_type":"Subway", "route_group":"subway", "route_name":"green e line", "info":"green-e" },
+
   "810_" : { "route_id":"810_", "route_type":"Subway", "route_group":"subway", "route_name":"green line", "info":"green" },
   "813_" : { "route_id":"813_", "route_type":"Subway", "route_group":"subway", "route_name":"green line", "info":"green_b" },
   "823_" : { "route_id":"823_", "route_type":"Subway", "route_group":"subway", "route_name":"green line", "info":"green" },

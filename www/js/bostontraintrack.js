@@ -52,7 +52,7 @@ function getMobileOperatingSystem() {
 
 var g_ostype = getMobileOperatingSystem();
 if ((g_ostype == "iOS") || (g_ostype == "Android")) {
-  g_scale_factor = 2.0;
+  g_scale_factor = 1.5;
 } else {
   //g_scale_factor = 1.3;
 }
@@ -141,16 +141,18 @@ var g_subway_filter = {
               "green-b-route":0,"green-c-route":0,"green-d-route":0,"green-e-route":0 },
 
   "route_group_map" : {
-    "red-route" : { "931_":1, "933_":1 },
-    "orange-route" : { "903_":1, "913_":1 },
-    "blue-route" : { "946_":1, "948_":1 },
-    "green-b-route":  { "810_":1, "813_":1, "823_":1 },
-    "green-c-route": { "830_":1, "831_":1 },
-    "green-d-route" : { "840_":1, "842_":1, "851_":1, "852_":1 },
-    "green-e-route" : { "880_":1, "882_":1 }
+    "red-route" : { "931_":1, "933_":1, "Red":1 },
+    "orange-route" : { "903_":1, "913_":1, "Orange":1 },
+    "blue-route" : { "946_":1, "948_":1, "Blue":1 },
+    "green-b-route":  { "810_":1, "813_":1, "823_":1, "Green-B":1 },
+    "green-c-route": { "830_":1, "831_":1, "Green-C":1 },
+    "green-d-route" : { "840_":1, "842_":1, "851_":1, "852_":1, "Green-D":1 },
+    "green-e-route" : { "880_":1, "882_":1, "Green-E":1 }
   },
 
   "route":{
+    "Red":0, "Orange":0, "Blue":0, "Green-B":0, "Green-C":0, "Green-D":0, "Green-E":0,
+
     //green
     // b        b         b
     //
@@ -531,9 +533,6 @@ function clearFilter( filter ) {
 function restoreCookieState( ) {
   var version = $.cookie('version');
   if (version != g_VERSION) {
-
-    console.log(">>>default");
-
     setupDefaultCookieState();
   }
 

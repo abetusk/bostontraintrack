@@ -1,11 +1,13 @@
-[BostonTrainTrack](http://bostontraintrack.com)
+BostonTrainTrack
 ================
+
+**NOTE BostonTrackTrack is now shut down.**
 
 ![Real Time Tracking](/misc/bostontraintrackScreenshot.png)
 
 Simple real time tracking of Boston metros, buses and commuter rails using Open Street Map (via OpenLayers) and MBTA's real time tracking.
 
-See it live at [bostontraintrack.com](http://bostontraintrack.com).
+BostonTrainTrack is now **shut down**.  If you would like to stand up your own server please feel free to contact me for help.
 
 USAGE
 -----

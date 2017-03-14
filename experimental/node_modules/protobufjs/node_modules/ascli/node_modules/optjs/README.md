@@ -41,4 +41,4 @@ console.log(require("./opt.js")());
 
 License
 -------
-NASA Open Source Agreement v1.3
+MIT
